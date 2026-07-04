@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPhone転売 ツールランチャー</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#07070f;color:#e0e0f0;font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;min-height:100vh;padding:24px;}
+
+.center{display:flex;flex-direction:column;align-items:center;}
+.logo{font-size:42px;margin-bottom:12px;}
+h1{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;}
+.sub{font-size:11px;color:#444;margin-bottom:32px;}
+
+/* ── ツールカード ── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:680px;width:100%;margin-bottom:14px;}
+@media(max-width:500px){.cards{grid-template-columns:1fr;}}
+.tool-card{background:linear-gradient(135deg,#161628,#1d1d35);border:1.5px solid #252545;border-radius:14px;padding:24px 20px;text-decoration:none;color:inherit;transition:.2s;display:block;position:relative;overflow:hidden;}
+.tool-card::before{content:'';position:absolute;top:-40%;right:-20%;width:180px;height:180px;border-radius:50%;opacity:.07;transition:.3s;}
+.tool-card.pickup::before{background:#7c6fff;}
+.tool-card.mgmt::before{background:#4fcf7a;}
+.tool-card:hover{transform:translateY(-3px);}
+.tool-card.pickup:hover{border-color:#7c6fff;box-shadow:0 10px 32px rgba(124,111,255,.15);}
+.tool-card.mgmt:hover{border-color:#4fcf7a;box-shadow:0 10px 32px rgba(79,207,122,.15);}
+.tool-icon{font-size:32px;margin-bottom:12px;}
+.tool-name{font-size:16px;font-weight:900;color:#fff;margin-bottom:5px;}
+.tool-desc{font-size:11px;color:#555;line-height:1.8;}
+.feat{font-size:11px;color:#444;margin-top:3px;}
+.feat::before{content:'› ';}
+.tool-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;margin-top:10px;}
+.tag-p{background:rgba(124,111,255,.2);color:#a78bfa;}
+.tag-g{background:rgba(79,207,122,.2);color:#4fcf7a;}
+.badge{position:absolute;top:14px;right:14px;background:#f74f6a;color:#fff;border-radius:50%;width:20px;height:20px;display:none;align-items:center;justify-content:center;font-size:10px;font-weight:800;}
+.badge.show{display:flex;}
+
+/* ── キュー通知 ── */
+.queue-notice{max-width:680px;width:100%;background:#0a1f0a;border:1px solid #22c55e;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;}
+.queue-notice.show{display:flex;}
+
+/* ── フロー ── */
+.flow{max-width:680px;width:100%;background:#0e0e1c;border:1px solid #252545;border-radius:12px;padding:12px 16px;margin-bottom:24px;display:flex;align-items:center;}
+.flow-step{text-align:center;flex:1;}
+.flow-step-icon{font-size:16px;margin-bottom:3px;}
+.flow-step-label{font-size:9px;color:#444;}
+.flow-arrow{color:#252545;font-size:14px;padding:0 2px;}
+
+/* ── Gemini 相場分析 ── */
+.gemini-panel{max-width:680px;width:100%;margin-bottom:24px;}
+.gemini-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.gemini-title{font-size:15px;font-weight:900;color:#fff;}
+.gemini-sub{font-size:10px;color:#555;}
+
+.api-row{display:flex;gap:8px;margin-bottom:10px;}
+.api-input{flex:1;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;color:#e0e0f0;font-size:12px;font-family:monospace;outline:none;}
+.api-input:focus{border-color:#6c63ff;}
+.api-input::placeholder{color:#333;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;filter:none!important;}
+.btn-gem{background:linear-gradient(135deg,#4285f4,#0f9d58,#f4b400,#db4437);color:#fff;}
+.btn-ghost{background:#1a1a2e;color:#888;border:1px solid #252545;}
+
+/* レポートカード */
+.report-card{background:#0e0e1c;border:1px solid #252545;border-radius:12px;padding:16px;min-height:120px;position:relative;transition:.3s;}
+.report-card.loading{border-color:#6c63ff;box-shadow:0 0 20px rgba(108,99,255,.1);}
+.report-card.done{border-color:#22c55e;}
+.report-card.error{border-color:#ef4444;}
+
+.loading-dots{display:flex;gap:6px;justify-content:center;padding:20px 0;}
+.dot{width:8px;height:8px;border-radius:50%;background:#6c63ff;animation:bounce .8s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.4;}50%{transform:translateY(-8px);opacity:1;}}
+
+/* レポート本文 */
+.report-body{font-size:13px;line-height:2;color:#ccc;white-space:pre-wrap;word-break:break-word;}
+.report-body h3{color:#a78bfa;font-size:13px;font-weight:800;margin:10px 0 4px;}
+.report-body strong{color:#fbbf24;}
+.report-body .ok{color:#4ade80;}
+.report-body .ng{color:#f87171;}
+
+/* モデル推薦バッジ */
+.rec-badges{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+.rec-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.rec-buy{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+.rec-watch{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.3);}
+.rec-ng{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+
+/* タイムスタンプ */
+.report-ts{font-size:10px;color:#333;margin-top:10px;text-align:right;}
+
+/* sources */
+.sources{margin-top:10px;padding-top:8px;border-top:1px solid #1a1a2e;}
+.source-item{font-size:10px;color:#555;margin-bottom:2px;}
+.source-item a{color:#6c63ff;text-decoration:none;}
+.source-item a:hover{text-decoration:underline;}
+
+/* footer */
+.footer{max-width:680px;width:100%;text-align:center;font-size:10px;color:#252545;margin-top:8px;}
+
+/* Gemini badge */
+.powered{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#555;background:#0e0e1c;border:1px solid #1a1a2e;border-radius:10px;padding:2px 8px;}
+</style>
+</head>
+<body>
+<div class="center">
+
+<div class="logo">📱</div>
+<h1>iPhone転売 ツールランチャー</h1>
+<div class="sub">Noe Dolphin / 投資部門</div>
+
+<!-- キュー通知 -->
+<div class="queue-notice" id="queueNotice">
+  <span style="font-size:18px">🔔</span>
+  <div>
+    <div style="font-weight:700;color:#4ade80;font-size:12px">ピックアップからの転送データがあります</div>
+    <div style="font-size:10px;color:#555" id="queueDesc">管理ツールを開いて「ピックアップ取込」を押してください</div>
+  </div>
+  <a href="./iphone-full.html" target="_blank"
+    style="margin-left:auto;background:#22c55e;color:#fff;padding:5px 12px;border-radius:7px;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;">
+    取込む →
+  </a>
+</div>
+
+<!-- ツールカード -->
+<div class="cards">
+  <a href="./iphone-pickup.html" target="_blank" class="tool-card pickup">
+    <div class="tool-icon">🚀</div>
+    <div class="tool-name">ピックアップツール</div>
+    <div class="tool-desc">購入前〜注文完了まで</div>
+    <div class="feat">7層リスクスコア自動算出</div>
+    <div class="feat">VPN切替ガイド＋IP自動確認</div>
+    <div class="feat">SIMフリー直接URLを生成</div>
+    <span class="tool-tag tag-p">仕入れフェーズ</span>
+  </a>
+  <a href="./iphone-full.html" target="_blank" class="tool-card mgmt">
+    <span class="badge" id="mgmtBadge">!</span>
+    <div class="tool-icon">📊</div>
+    <div class="tool-name">購入管理ツール</div>
+    <div class="tool-desc">注文後〜売却完了まで</div>
+    <div class="feat">注文ステータス管理（7段階）</div>
+    <div class="feat">メール自動解析＆ステータス更新</div>
+    <div class="feat">カード・Gmail・利益管理</div>
+    <span class="tool-tag tag-g">管理フェーズ</span>
+  </a>
+</div>
+
+<!-- フロー -->
+<div class="flow">
+  <div class="flow-step"><div class="flow-step-icon">🌐</div><div class="flow-step-label">VPN設定</div></div>
+  <div class="flow-arrow">›</div>
+  <div class="flow-step"><div class="flow-step-icon">🎯</div><div class="flow-step-label">リスクチェック</div></div>
+  <div class="flow-arrow">›</div>
+  <div class="flow-step"><div class="flow-step-icon">🍎</div><div class="flow-step-label">Apple Store</div></div>
+  <div class="flow-arrow">›</div>
+  <div class="flow-step"><div class="flow-step-icon">🔄</div><div class="flow-step-label">自動転送</div></div>
+  <div class="flow-arrow">›</div>
+  <div class="flow-step"><div class="flow-step-icon">📦</div><div class="flow-step-label">配送追跡</div></div>
+  <div class="flow-arrow">›</div>
+  <div class="flow-step"><div class="flow-step-icon">💰</div><div class="flow-step-label">買取・利益</div></div>
+</div>
+
+<!-- ── 説明書リンク ── -->
+<div style="max-width:680px;width:100%;margin-bottom:16px;">
+  <a href="./iphone-pickup-manual.html" target="_blank"
+    style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#161628,#1d1d35);border:1px solid #323260;border-radius:10px;padding:12px 16px;text-decoration:none;color:#e0e0f0;transition:.2s;"
+    onmouseover="this.style.borderColor='#7c6fff'" onmouseout="this.style.borderColor='#323260'">
+    <span style="font-size:22px;">📘</span>
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#fff;">取扱説明書を読む</div>
+      <div style="font-size:10px;color:#666;">全10章 — 初めての人はここから</div>
+    </div>
+    <span style="margin-left:auto;color:#7c6fff;font-size:12px;">開く ↗</span>
+  </a>
+</div>
+
+<!-- ── 相場クイックリンク ── -->
+<div style="max-width:680px;width:100%;margin-bottom:16px;">
+  <div style="font-size:10px;color:#444;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;">📊 相場確認サイト</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="https://is-checker.com/iphone17_beta.html?229" target="_blank"
+      style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
+      onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='#252545'">
+      📋 is-checker（全業者一覧）
+      <span style="font-size:9px;color:#555;">リアルタイム差益付き</span>
+    </a>
+    <a href="https://x.com/search?q=%23iPhone17%E8%B2%B7%E5%8F%96%E7%9B%B8%E5%A0%B4&f=live" target="_blank"
+      style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
+      onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#252545'">
+      𝕏 #iPhone17買取相場
+    </a>
+    <a href="https://whatismyip.com" target="_blank"
+      style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
+      onmouseover="this.style.borderColor='#4ade80'" onmouseout="this.style.borderColor='#252545'">
+      🌐 IP確認
+    </a>
+  </div>
+</div>
+
+<!-- ── Gemini 相場分析パネル ── -->
+<div class="gemini-panel">
+  <div class="gemini-header">
+    <span style="font-size:24px">✨</span>
+    <div>
+      <div class="gemini-title">AI相場分析 <span class="powered">✦ Gemini powered</span></div>
+      <div class="gemini-sub">Gemini APIがGoogle検索で最新の買取相場を取得し、今日の戦略を自動生成します</div>
+    </div>
+  </div>
+
+  <!-- APIキー入力 -->
+  <div class="api-row">
+    <input type="password" class="api-input" id="apiKey"
+      placeholder="Gemini API Key（AIzaSy...）"
+      value="" autocomplete="off"/>
+    <button class="btn btn-ghost" id="saveKeyBtn" onclick="saveKey()">保存</button>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+    <button class="btn btn-gem" id="analyzeBtn" onclick="runAnalysis()">
+      ✨ 今日の相場を分析する
+    </button>
+    <button class="btn btn-ghost" onclick="runAnalysis('strategy')">
+      🎯 iPhone 18戦略を立案
+    </button>
+    <button class="btn btn-ghost" onclick="runAnalysis('risk')">
+      🛡 島流しリスクを評価
+    </button>
+  </div>
+
+  <!-- レポート表示エリア -->
+  <div class="report-card" id="reportCard">
+    <div style="text-align:center;padding:24px 0;color:#333;font-size:12px;">
+      APIキーを入力して「今日の相場を分析する」を押してください
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  APIキーはlocalStorageに保存されます。データは外部に送信されません（Gemini APIを除く）
+</div>
+
+</div><!-- /center -->
+
+<script>
+// ── キュー通知 ──
+function checkQueue() {
+  try {
+    const queue = JSON.parse(localStorage.getItem('pickup_queue')||'[]');
+    const n = queue.length;
+    const notice = document.getElementById('queueNotice');
+    const badge  = document.getElementById('mgmtBadge');
+    const desc   = document.getElementById('queueDesc');
+    if (n > 0) {
+      notice.classList.add('show');
+      desc.textContent = `${n}件の注文データが転送待ちです`;
+      badge.textContent = n; badge.classList.add('show');
+    } else {
+      notice.classList.remove('show');
+      badge.classList.remove('show');
+    }
+  } catch(e) {}
+}
+checkQueue();
+setInterval(checkQueue, 3000);
+
+// ── APIキー管理 ──
+const KEY_STORAGE = 'gemini_api_key';
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem(KEY_STORAGE);
+  if (saved) document.getElementById('apiKey').value = saved;
+});
+
+function saveKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) { alert('APIキーを入力してください'); return; }
+  localStorage.setItem(KEY_STORAGE, key);
+  const btn = document.getElementById('saveKeyBtn');
+  btn.textContent = '✓ 保存済';
+  btn.style.color = '#4ade80';
+  setTimeout(() => { btn.textContent = '保存'; btn.style.color = ''; }, 2000);
+}
+
+// ── Gemini API 呼び出し ──
+async function callGemini(prompt) {
+  const key = document.getElementById('apiKey').value.trim() || localStorage.getItem(KEY_STORAGE);
+  if (!key) throw new Error('APIキーが設定されていません');
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ googleSearch: {} }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1500,
+        }
+      })
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || `API Error ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+// ── プロンプト定義 ──
+const IS_CHECKER_URL = 'https://is-checker.com/iphone17_beta.html?229';
+
+const PROMPTS = {
+  default: `
+今日（${new Date().toLocaleDateString('ja-JP')}）のiPhone転売の最新相場を調査してください。
+
+【必ずアクセスするURL】
+${IS_CHECKER_URL}
+このページにiPhone 17全モデルの全業者買取価格と差益（利益）がリアルタイムで載っています。
+このページのデータを最優先で使用してください。
+
+【補足調査】
+- X（旧Twitter）で #iPhone17買取相場 の最新ツイートも確認する
+- 島流し・即ごちゅありの最新状況を調べる
+
+【出力形式】
+## 📊 今日の買取相場（is-checker.com より）
+| モデル | カラー | 定価 | 最高買取 | 差益 | 判定 |
+|---|---|---|---|---|---|
+（表形式で主要モデルを記載）
+
+## ✅ 今日買うべきモデル
+（差益がプラスのもの。具体的なモデル名・カラー・最高買取業者名）
+
+## ❌ 今日避けるべきモデル
+（差益がマイナスのもの）
+
+## 🚨 島流し・市場状況
+（Xの最新情報）
+
+## 💡 今日の戦略（1〜2文）
+`.trim(),
+
+  strategy: `
+iPhone 18の発売に向けた転売戦略を、最新のリーク情報・市場動向を踏まえてアドバイスしてください。
+
+Google検索で以下を調べた上で回答してください：
+- iPhone 18のスペック・価格リーク情報
+- iPhone 18のSIM仕様（物理SIM復活の可能性）
+- 2026年秋のiPhone転売市場予測
+
+## 📱 iPhone 18 最新リーク
+## 💰 利益予測（SIM仕様別）
+## 📅 準備スケジュール（今から発売まで）
+## 🎯 推奨アクション
+`.trim(),
+
+  risk: `
+現在（${new Date().toLocaleDateString('ja-JP')}）のApple Store iPhoneピックアップ（転売）における島流しリスクを評価してください。
+
+Xや転売コミュニティの最新情報をGoogle検索で調べた上で：
+
+## 🌡 現在の島流しリスクレベル
+（低/中/高/非常に高い）
+
+## 📋 最新の検知パターン
+（現在特に警戒すべき要素）
+
+## ✅ 今週有効な回避策
+（具体的な手順）
+
+## ⚠️ 今週無効になった旧手法
+`.trim(),
+};
+
+// ── 分析実行 ──
+async function runAnalysis(type = 'default') {
+  const card = document.getElementById('reportCard');
+  const btn  = document.getElementById('analyzeBtn');
+
+  // ローディング表示
+  card.className = 'report-card loading';
+  card.innerHTML = `
+    <div style="font-size:11px;color:#6c63ff;margin-bottom:12px;font-weight:700;">
+      ✦ Gemini がGoogle検索で最新情報を収集中...
+    </div>
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>`;
+  btn.disabled = true;
+
+  try {
+    const prompt = PROMPTS[type] || PROMPTS.default;
+    const data   = await callGemini(prompt);
+
+    // テキスト抽出
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '結果を取得できませんでした';
+
+    // ソース抽出
+    const sources = data.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+
+    // マークダウンを簡易HTMLに変換
+    const html = text
+      .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/✅/g, '<span class="ok">✅</span>')
+      .replace(/❌/g, '<span class="ng">❌</span>')
+      .replace(/🔴/g, '<span class="ng">🔴</span>')
+      .replace(/🟢/g, '<span class="ok">🟢</span>');
+
+    // 推薦バッジを抽出
+    const buyModels   = (text.match(/Pro Max 512|Pro Max 256|Pro 512/g)||[]);
+    const watchModels = (text.match(/Pro Max 1TB|Pro 256/g)||[]);
+    const ngModels    = (text.match(/Air|2TB|無印/g)||[]);
+
+    const badges = [
+      ...buyModels.map(m=>`<span class="rec-badge rec-buy">✓ 買い ${m}</span>`),
+      ...watchModels.map(m=>`<span class="rec-badge rec-watch">△ 要確認 ${m}</span>`),
+      ...ngModels.slice(0,2).map(m=>`<span class="rec-badge rec-ng">✕ NG ${m}</span>`),
+    ].filter((v,i,a)=>a.indexOf(v)===i);
+
+    card.className = 'report-card done';
+    card.innerHTML = `
+      ${badges.length>0 ? `<div class="rec-badges">${badges.join('')}</div>` : ''}
+      <div class="report-body">${html}</div>
+      ${sources.length>0 ? `
+        <div class="sources">
+          <div style="font-size:10px;color:#333;margin-bottom:4px;">参照ソース</div>
+          ${sources.slice(0,5).map(s=>`
+            <div class="source-item">
+              › <a href="${s.web?.uri||'#'}" target="_blank">${s.web?.title||s.web?.uri||'—'}</a>
+            </div>`).join('')}
+        </div>` : ''}
+      <div class="report-ts">
+        ✦ Gemini 2.0 Flash — ${new Date().toLocaleString('ja-JP')} 取得
+      </div>`;
+
+    // キャッシュ保存
+    localStorage.setItem('gemini_last_report', JSON.stringify({
+      text, time: new Date().toISOString(), type
+    }));
+
+  } catch(err) {
+    card.className = 'report-card error';
+    card.innerHTML = `
+      <div style="color:#f87171;font-size:12px;font-weight:700;margin-bottom:6px;">⚠ エラーが発生しました</div>
+      <div style="color:#555;font-size:11px;">${err.message}</div>
+      <div style="color:#333;font-size:10px;margin-top:8px;">
+        APIキーを確認してください。<a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6c63ff;">Google AI Studio ↗</a>
+      </div>`;
+  }
+
+  btn.disabled = false;
+}
+
+// ── 前回のレポートをキャッシュから復元 ──
+window.addEventListener('load', () => {
+  try {
+    const cached = JSON.parse(localStorage.getItem('gemini_last_report')||'null');
+    if (!cached) return;
+    const age = (Date.now() - new Date(cached.time)) / (1000*60*60);
+    if (age > 12) return; // 12時間超は表示しない
+
+    const card = document.getElementById('reportCard');
+    const html = cached.text
+      .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/✅/g, '<span class="ok">✅</span>')
+      .replace(/❌/g, '<span class="ng">❌</span>');
+
+    card.className = 'report-card done';
+    card.innerHTML = `
+      <div style="font-size:10px;color:#555;margin-bottom:8px;">📋 前回のレポート（${new Date(cached.time).toLocaleString('ja-JP')}）</div>
+      <div class="report-body">${html}</div>
+      <div class="report-ts">キャッシュ表示 — 再取得するには「今日の相場を分析する」を押してください</div>`;
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

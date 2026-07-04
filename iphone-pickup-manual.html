@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPhone ピックアップツール v3 — 取扱説明書</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#07070f;--bg2:#0e0e1c;--bg3:#161628;--bg4:#1d1d35;
+  --border:#252545;--border2:#323260;
+  --text:#e0e0f0;--muted:#8888a8;--muted2:#585878;
+  --purple:#7c6fff;--purple2:#a78bfa;--purple3:#c4b5fd;
+  --green:#22c55e;--green2:#4ade80;
+  --red:#ef4444;--red2:#f87171;
+  --yellow:#f59e0b;--yellow2:#fbbf24;
+  --blue:#3b82f6;--blue2:#60a5fa;
+}
+body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;line-height:1.8;font-size:14px;}
+::-webkit-scrollbar{width:8px;}::-webkit-scrollbar-track{background:var(--bg2);}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px;}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px;}
+
+/* hero */
+.hero{text-align:center;padding:56px 20px 40px;background:linear-gradient(180deg,rgba(124,111,255,.08),transparent);border-bottom:1px solid var(--border);margin-bottom:8px;}
+.hero .icon{font-size:56px;margin-bottom:12px;}
+.hero h1{font-size:28px;font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:-.5px;}
+.hero .sub{font-size:13px;color:var(--muted);}
+.hero .ver{display:inline-block;margin-top:14px;font-size:11px;font-weight:700;background:rgba(124,111,255,.15);color:var(--purple2);padding:3px 12px;border-radius:20px;border:1px solid var(--border2);}
+
+/* toc */
+.toc{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin:28px 0;}
+.toc-title{font-size:12px;font-weight:800;color:var(--purple2);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;}
+.toc ol{list-style:none;counter-reset:toc;}
+.toc li{counter-increment:toc;padding:5px 0;border-bottom:1px solid rgba(37,37,69,.4);}
+.toc li:last-child{border:none;}
+.toc a{color:var(--text);text-decoration:none;display:flex;align-items:center;gap:10px;transition:.15s;}
+.toc a:hover{color:var(--purple3);}
+.toc a::before{content:counter(toc);width:24px;height:24px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--purple2);flex-shrink:0;}
+.toc .desc{font-size:11px;color:var(--muted2);margin-left:auto;}
+
+/* section */
+section{margin:44px 0;scroll-margin-top:20px;}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border);}
+.sec-num{width:36px;height:36px;background:linear-gradient(135deg,var(--purple),var(--purple2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;}
+.sec-head h2{font-size:20px;font-weight:800;color:#fff;}
+.sec-head .emoji{font-size:22px;}
+
+p{margin-bottom:12px;color:var(--text);}
+.lead{color:var(--muted);font-size:13px;margin-bottom:18px;}
+
+/* card */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;}
+.card h3{font-size:15px;font-weight:800;color:var(--purple3);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.card p{font-size:13px;color:var(--muted);margin-bottom:6px;}
+
+/* steps */
+.steps{counter-reset:step;}
+.step{display:flex;gap:14px;margin-bottom:14px;counter-increment:step;}
+.step-num{width:30px;height:30px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.step-num::before{content:counter(step);}
+.step-body{flex:1;padding-top:2px;}
+.step-body strong{color:#fff;}
+.step-body .note{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* table */
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
+th{background:var(--bg2);color:var(--purple2);padding:9px 12px;text-align:left;font-size:12px;font-weight:700;border-bottom:1px solid var(--border2);}
+td{padding:9px 12px;border-bottom:1px solid rgba(37,37,69,.5);vertical-align:top;color:var(--text);}
+tr:last-child td{border-bottom:none;}
+td .k{color:var(--purple3);font-weight:700;}
+
+/* callout */
+.callout{border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px;border-left:3px solid;}
+.callout.tip{background:rgba(34,197,94,.06);border-color:var(--green);color:var(--green2);}
+.callout.warn{background:rgba(245,158,11,.06);border-color:var(--yellow);color:var(--yellow2);}
+.callout.danger{background:rgba(239,68,68,.06);border-color:var(--red);color:var(--red2);}
+.callout.info{background:rgba(59,130,246,.06);border-color:var(--blue);color:var(--blue2);}
+.callout strong{color:#fff;}
+
+/* badge */
+.b{display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;font-weight:700;}
+.b-g{background:rgba(34,197,94,.2);color:var(--green2);}
+.b-y{background:rgba(245,158,11,.2);color:var(--yellow2);}
+.b-r{background:rgba(239,68,68,.2);color:var(--red2);}
+.b-p{background:rgba(124,111,255,.2);color:var(--purple3);}
+
+code{background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-family:'SF Mono',Consolas,monospace;font-size:12px;color:var(--purple3);}
+.mono{font-family:'SF Mono',Consolas,monospace;font-size:12px;color:var(--muted);word-break:break-all;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin:8px 0;}
+
+.layer-grid{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0;}
+.layer{display:flex;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.layer-n{width:28px;height:28px;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--purple2);flex-shrink:0;}
+.layer-t{flex:1;}
+.layer-t b{color:#fff;font-size:13px;}
+.layer-t .d{font-size:12px;color:var(--muted);}
+
+.foot{text-align:center;margin-top:60px;padding-top:24px;border-top:1px solid var(--border);font-size:11px;color:var(--muted2);}
+
+a.link{color:var(--purple2);text-decoration:none;}
+a.link:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="icon">📱</div>
+  <h1>iPhone ピックアップツール v3</h1>
+  <div class="sub">取扱説明書 — 仕入れフェーズの全操作ガイド</div>
+  <div class="ver">Noe Dolphin / 投資部門 &nbsp;·&nbsp; 7層リスクチェック搭載</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 概要 -->
+  <div class="callout info" style="margin-top:24px;">
+    このツールは <strong>Apple Store でiPhoneを仕入れる作業</strong>を効率化し、<strong>「島流し」（配送遅延ペナルティ）を回避</strong>するための司令塔です。注文を記録すると、購入管理ツール（iphone-full.html）へ自動連携されます。
+  </div>
+
+  <!-- 目次 -->
+  <div class="toc">
+    <div class="toc-title">目次</div>
+    <ol>
+      <li><a href="#s1">起動と全体構成<span class="desc">3つのタブ</span></a></li>
+      <li><a href="#s2">作戦ダッシュボード<span class="desc">最適解・キャパ・利益</span></a></li>
+      <li><a href="#s3">相場連動エンジン<span class="desc">is-checker自動取得</span></a></li>
+      <li><a href="#s4">利益シミュレーター<span class="desc">手取り自動計算</span></a></li>
+      <li><a href="#s5">7層リスクスコア<span class="desc">島流し検知</span></a></li>
+      <li><a href="#s6">STEP 1-4 注文フロー<span class="desc">実作業手順</span></a></li>
+      <li><a href="#s7">リソース自動ローテーション<span class="desc">4プール管理</span></a></li>
+      <li><a href="#s8">設定・バックアップ<span class="desc">データ管理</span></a></li>
+      <li><a href="#s9">管理ツール連携<span class="desc">注文の受け渡し</span></a></li>
+      <li><a href="#s10">よくある質問<span class="desc">FAQ・トラブル</span></a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <section id="s1">
+    <div class="sec-head"><div class="sec-num">1</div><span class="emoji">🚀</span><h2>起動と全体構成</h2></div>
+    <p class="lead">ローカルサーバー経由でブラウザから開いて使います。</p>
+    <div class="mono">公開URL/iphone-pickup.html（ローカルの場合は http://localhost:8080/iphone-pickup.html）</div>
+    <p>画面は3つのタブで構成されています。</p>
+    <table>
+      <tr><th>タブ</th><th>役割</th></tr>
+      <tr><td><span class="k">🚀 ピックアップ</span></td><td>メイン画面。相場確認 → リソース選択 → リスク判定 → 注文記録までを行う</td></tr>
+      <tr><td><span class="k">📋 注文管理</span></td><td>記録済みの注文一覧。ステータス確認・削除</td></tr>
+      <tr><td><span class="k">⚙️ 設定</span></td><td>プロキシ・アカウント・住所・カードの登録、バックアップ/復元</td></tr>
+    </table>
+    <div class="callout tip">画面上部の <strong>IPバー</strong> は常時表示。現在のIPと、前回からの変化（✓変更済 / ⚠未変更）を色で示します。クリックで再確認できます。</div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <div class="sec-head"><div class="sec-num">2</div><span class="emoji">🎯</span><h2>作戦ダッシュボード</h2></div>
+    <p class="lead">「今、何を、何台買うべきか」を一目で判断する司令塔パネルです。</p>
+
+    <div class="card">
+      <h3>💡 今の最適解</h3>
+      <p>相場データから<strong>最も差益の大きいモデル×カラー</strong>を自動特定します。表示は<span class="b b-g">素の差益</span>（買取価格−定価）を主軸とし、ギフト5%還元込みの参考値も併記します。</p>
+      <p><span class="b b-p">⚡ この構成を適用する</span> ボタンで、モデルとカラーが自動セットされます。</p>
+    </div>
+
+    <div class="card">
+      <h3>🛡 安全キャパシティ</h3>
+      <p>プロキシ・アカウント・住所・カードの4リソースから、<strong>何台まで安全に注文できるか</strong>を算出します。最も少ないリソースが「ボトルネック」として表示されます。</p>
+      <div class="callout warn">例: アカウントが4個しかなければ、他が10個あっても<strong>安全な上限は4台</strong>。同じアカウントの使い回しは島流しリスクを上げるためです。</div>
+    </div>
+
+    <div class="card">
+      <h3>📈 利益ランキング</h3>
+      <p>全構成を<strong>素の差益順</strong>に並べ、上位5件を表示。各行の右端 <code>ギ+11.9k</code> はギフト5%込みの参考値です。</p>
+    </div>
+
+    <div class="callout info"><strong>なぜ素の差益を優先？</strong> ギフト5%は定価に比例するため、それでソートすると「旨味ゼロなのに定価が高いだけ」のモデル（1TB等）が不当に上位化します。実際のアービトラージのエッジは素の差益に表れます。</div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <div class="sec-head"><div class="sec-num">3</div><span class="emoji">📊</span><h2>相場連動エンジン</h2></div>
+    <p class="lead">買取相場を自動取得し、全機能に反映します。</p>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>起動時に自動取得</strong><div class="note">is-checker.com から色別・容量別の差益を読み込みます。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>🔄 相場を再取得</strong> ボタン<div class="note">最新相場に手動更新。取得件数と最終更新時刻が表示されます。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>フォールバック値</strong><div class="note">通信が失敗しても、前回確認値（タグに <code>*</code> 付き）で必ず数字が出ます。</div></div></div>
+    </div>
+    <div class="callout warn"><strong>CORS制限について:</strong> localhost からのブラウザ直接取得は is-checker 側の制限でブロックされる場合があります。その時はフォールバック値で動作します。最新の実数字が必要なら、<a class="link" href="https://is-checker.com/iphone17_beta.html?229" target="_blank">元サイト ↗</a> を直接開いて確認してください。</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <div class="sec-head"><div class="sec-num">4</div><span class="emoji">💰</span><h2>利益シミュレーター</h2></div>
+    <p class="lead">モデル＋カラーを選ぶと、その場で手取り利益/台を計算します。</p>
+    <table>
+      <tr><th>項目</th><th>意味</th></tr>
+      <tr><td><span class="k">定価</span></td><td>Apple Store の販売価格</td></tr>
+      <tr><td><span class="k">最高買取</span></td><td>相場から検出した最高値の買取業者価格</td></tr>
+      <tr><td><span class="k">素の差益</span></td><td>最高買取 − 定価（本質的な旨味）</td></tr>
+      <tr><td><span class="k">ギフト5%還元</span></td><td>Appleギフトカードを5%引きで調達した場合の追加利益</td></tr>
+      <tr><td><span class="k">手取り利益</span></td><td>素の差益 ＋ ギフト還元</td></tr>
+    </table>
+    <div class="callout tip">カラーによって相場は変わります。同じ512GBでも<strong>シルバーは黒字・オレンジは赤字</strong>ということが起こるため、カラー選択は利益を左右します。</div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <div class="sec-head"><div class="sec-num">5</div><span class="emoji">🛡</span><h2>7層リスクスコア</h2></div>
+    <p class="lead">注文ごとに0〜100点で島流しリスクを自動採点します。<span class="b b-g">安全</span> / <span class="b b-y">注意</span> / <span class="b b-r">危険</span> の3段階で色分け表示。</p>
+    <div class="layer-grid">
+      <div class="layer"><div class="layer-n">1</div><div class="layer-t"><b>アカウント状態</b><div class="d">作成6ヶ月未満・BAN・連続使用を検知</div></div></div>
+      <div class="layer"><div class="layer-n">2</div><div class="layer-t"><b>カード重複</b><div class="d">直近3注文と同じカードの使用を警告</div></div></div>
+      <div class="layer"><div class="layer-n">3</div><div class="layer-t"><b>住所（郵便番号）重複</b><div class="d">履歴全体で同一郵便番号への集中を検知</div></div></div>
+      <div class="layer"><div class="layer-n">4</div><div class="layer-t"><b>IP / デバイス</b><div class="d">プロキシ切替・IP変化を確認。未変更は大幅減点</div></div></div>
+      <div class="layer"><div class="layer-n">5</div><div class="layer-t"><b>購入間隔</b><div class="d">前回注文から5分未満は警告（15分以上推奨）</div></div></div>
+      <div class="layer"><div class="layer-n">6</div><div class="layer-t"><b>電話番号重複</b><div class="d">直近注文と同じ番号の使い回しを検知</div></div></div>
+      <div class="layer"><div class="layer-n">7</div><div class="layer-t"><b>メール重複</b><div class="d">アドレス重複・クロスアカウント紐付けを検知</div></div></div>
+    </div>
+    <div class="callout danger">スコアが<strong>危険（赤）</strong>の時は、指摘された項目（例:「IPが前回と同じ」）を解消してから注文してください。赤のまま注文すると島流しの確率が跳ね上がります。</div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <div class="sec-head"><div class="sec-num">6</div><span class="emoji">🎯</span><h2>STEP 1-4 注文フロー</h2></div>
+    <p class="lead">実際の注文作業は4ステップに分かれ、各ステップがリスクエンジンと連動します。</p>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>プロキシを切り替える</strong><div class="note">「🔄 切替手順を表示」で手順モーダルが開きます。SwitchyOmega版とSIM機内モード版の2方式に対応。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>IPアドレスを確認する</strong><div class="note">切替の3秒後に自動でIP再取得。変更前後を比較表示します。IPが変わっていなければ警告。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>モデル・カラーを選択する</strong><div class="note">相場タグ・利益シミュレーター・7層リスクが同時に判定されます。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>Apple Store直リンク＆注文記録</strong><div class="note">SIMフリー商品ページを直接生成。注文後「記録する」で管理ツールへ自動転送。</div></div></div>
+    </div>
+    <div class="card">
+      <h3>🍎 Apple Store 直リンク</h3>
+      <p>モデル＋カラーを選ぶと、検索不要で該当SKUのURLを自動生成します。</p>
+      <div class="mono">apple.com/jp/shop/buy-iphone/iphone-17-pro/<br>6.9インチディスプレイ-512gb-シルバー-simフリー?bfil=1</div>
+    </div>
+    <div class="card">
+      <h3>✅ 8項目チェックリスト</h3>
+      <p>プロキシ切替・IP変更・郵便番号相異・カード相異・電話番号相異・メール相異・受取人名重複・アカウント年齢の8項目。<strong>7層リスクと同期</strong>し、危険項目は赤字になります。</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <div class="sec-head"><div class="sec-num">7</div><span class="emoji">🔄</span><h2>リソース自動ローテーション</h2></div>
+    <p class="lead">4つのリソースプールを管理し、使い回しを防ぎます。</p>
+    <table>
+      <tr><th>プール</th><th>表示・挙動</th></tr>
+      <tr><td><span class="k">🌐 プロキシ</span></td><td>VPN / HTTP / SIM。前回と同じものを選ぶと警告</td></tr>
+      <tr><td><span class="k">👤 アカウント</span></td><td>6ヶ月以上は<span class="b b-g">緑</span>、未満は<span class="b b-y">黄</span>、BANは選択不可</td></tr>
+      <tr><td><span class="k">🏠 住所</span></td><td>一度使うと「使用済」。残数をヘッダーに表示</td></tr>
+      <tr><td><span class="k">💳 カード</span></td><td>直近3注文と異なるものを推奨</td></tr>
+    </table>
+    <div class="callout tip"><strong>「次の注文を準備」</strong>を押すと、使用済みを自動で除外して次のリソースを選択します。毎回手で選ぶ必要はありません。</div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <div class="sec-head"><div class="sec-num">8</div><span class="emoji">⚙️</span><h2>設定・バックアップ</h2></div>
+    <p class="lead">設定タブでリソースを登録し、データを保全します。</p>
+    <div class="card">
+      <h3>💾 バックアップ / 復元</h3>
+      <p><strong>⬇ バックアップをダウンロード</strong> — 全リソース＋注文履歴をJSONファイルで保存。</p>
+      <p><strong>⬆ バックアップから復元</strong> — 保存したJSONを読み込んで復元。別PCへの移行やデータ事故対策に。</p>
+    </div>
+    <div class="card">
+      <h3>✉️ Yahooエイリアス自動生成</h3>
+      <p>アカウント設定で、メールアドレスからエイリアス（<code>user+123@domain</code>）を自動生成。メール分散に使います。</p>
+    </div>
+    <div class="callout info">データはブラウザの localStorage に保存されます。<strong>同じブラウザ・同じポート（8080）</strong>で開けば維持されます。ブラウザのデータ削除で消えるため、定期バックアップを推奨します。</div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <div class="sec-head"><div class="sec-num">9</div><span class="emoji">🔗</span><h2>管理ツール連携</h2></div>
+    <p class="lead">仕入れ（このツール）と管理（iphone-full.html）は自動でつながります。</p>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>ピックアップで注文を記録</strong><div class="note">STEP 4 の「記録する」で、注文データが共有キューに書き込まれます。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>管理ツールに🔴バッジ</strong><div class="note">「ピックアップ取込」ボタンに件数バッジが表示されます。</div></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><strong>ワンクリックで取り込み</strong><div class="note">配送追跡・買取相場・利益計算は管理ツール側で行います。</div></div></div>
+    </div>
+    <div class="callout tip"><strong>ランチャー</strong>（iphone-launcher.html）から両ツールを開くのが基本。転送待ちデータがあれば通知が出ます。</div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <div class="sec-head"><div class="sec-num">10</div><span class="emoji">❓</span><h2>よくある質問</h2></div>
+
+    <div class="card">
+      <h3>Q. IPはツールが自動で切り替える？</h3>
+      <p>いいえ。ツールは<strong>手順を案内し、切替結果を確認する</strong>役割です。実際の切替は SwitchyOmega（Chrome拡張）またはSIMの機内モードON/OFFで、ユーザーが行います。切替後は自動でIP再確認します。</p>
+    </div>
+    <div class="card">
+      <h3>Q. 相場が「フォールバック値」のまま更新されない</h3>
+      <p>is-checker への直接アクセスがCORSでブロックされています。<a class="link" href="https://is-checker.com/iphone17_beta.html?229" target="_blank">元サイト</a>を別タブで開いて数字を確認してください。仕組み上、正確なライブ取得には簡易プロキシ（GAS等）を挟む必要があります。</p>
+    </div>
+    <div class="card">
+      <h3>Q. データが消えた</h3>
+      <p>localStorage はブラウザのデータ削除・シークレットモードで消えます。設定タブから<strong>定期的にバックアップ</strong>してください。</p>
+    </div>
+    <div class="card">
+      <h3>Q. モデルタグの <code>*</code> は何？</h3>
+      <p>ライブ取得できず、フォールバック（前回確認値）を表示している印です。「🔄 相場を再取得」が成功すると <code>*</code> は消えます。</p>
+    </div>
+
+    <div class="callout danger" style="margin-top:20px;">
+      <strong>免責:</strong> 本ツールは作業効率化と記録のための補助ツールです。決済・アカウント作成・規約同意などの操作は自動化せず、必ず利用者自身が判断・実行してください。各サービスの利用規約を遵守してください。
+    </div>
+  </section>
+
+  <div class="foot">
+    iPhone ピックアップツール v3 取扱説明書<br>
+    Noe Dolphin / 投資部門 &nbsp;·&nbsp; 最終更新 2026-07-04
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iPhone ピックアップツール v3</title>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#07070f;--bg2:#0e0e1c;--bg3:#161628;--bg4:#1d1d35;
+  --border:#252545;--border2:#323260;
+  --text:#e0e0f0;--muted:#585878;--muted2:#383858;
+  --purple:#7c6fff;--purple2:#a78bfa;--purple3:#c4b5fd;
+  --green:#22c55e;--green2:#4ade80;
+  --red:#ef4444;--red2:#f87171;
+  --yellow:#f59e0b;--yellow2:#fbbf24;
+  --blue:#3b82f6;--blue2:#60a5fa;
+  --orange:#f97316;--orange2:#fb923c;
+}
+body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;min-height:100vh;font-size:13px;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--bg2);}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:3px;}
+
+/* topbar */
+.topbar{background:linear-gradient(90deg,var(--bg3),var(--bg4));padding:10px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:300;}
+.app-title{font-size:14px;font-weight:900;color:#fff;}
+.app-sub{font-size:10px;color:var(--muted);}
+
+/* ip bar */
+.ipbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:5px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:50px;z-index:200;font-size:11px;}
+.ip-chip{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:3px 10px;cursor:pointer;transition:.2s;}
+.ip-chip:hover{border-color:var(--purple2);}
+.ip-chip.ok{border-color:var(--green);background:rgba(34,197,94,.08);}
+.ip-chip.bad{border-color:var(--red);background:rgba(239,68,68,.08);animation:danger 1s infinite;}
+@keyframes danger{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);}50%{box-shadow:0 0 0 5px transparent;}}
+.dot{width:6px;height:6px;border-radius:50%;}
+
+/* tabs */
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;}
+.tab{padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap;transition:.15s;}
+.tab:hover{color:var(--text);background:var(--bg3);}
+.tab.active{color:var(--purple2);border-bottom-color:var(--purple2);background:var(--bg3);}
+
+.main{padding:12px;max-width:1200px;margin:0 auto;}
+
+/* cards */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:13px;}
+.card-title{font-size:10px;font-weight:700;color:var(--purple2);margin-bottom:10px;letter-spacing:.6px;text-transform:uppercase;display:flex;align-items:center;gap:5px;}
+
+/* ── RISK SCORE ── */
+.risk-box{border-radius:12px;padding:14px 16px;border:2px solid;margin-bottom:12px;}
+.risk-box.safe  {border-color:var(--green); background:rgba(34,197,94,.06);}
+.risk-box.caution{border-color:var(--yellow);background:rgba(245,158,11,.06);}
+.risk-box.danger {border-color:var(--red);   background:rgba(239,68,68,.06);}
+.risk-score{font-size:42px;font-weight:900;font-family:monospace;line-height:1;}
+.risk-score.safe  {color:var(--green2);}
+.risk-score.caution{color:var(--yellow2);}
+.risk-score.danger {color:var(--red2);}
+.risk-label{font-size:11px;font-weight:700;margin-left:8px;}
+.risk-bar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;margin:10px 0;}
+.risk-fill{height:100%;border-radius:4px;transition:width .5s;}
+
+/* risk items */
+.risk-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(37,37,69,.5);font-size:11px;}
+.risk-item:last-child{border:none;}
+.ri-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+.ri-body{flex:1;}
+.ri-title{font-weight:700;color:var(--text);}
+.ri-desc{color:var(--muted);font-size:10px;margin-top:1px;}
+.ri-action{font-size:10px;margin-top:3px;font-weight:600;}
+.ri-action.act{color:var(--blue2);}
+.ri-action.warn{color:var(--yellow2);}
+.ri-action.ok{color:var(--green2);}
+.ri-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;}
+.rb-ok{background:rgba(34,197,94,.2);color:var(--green2);}
+.rb-warn{background:rgba(245,158,11,.2);color:var(--yellow2);}
+.rb-ng{background:rgba(239,68,68,.2);color:var(--red2);}
+
+/* pool grid */
+.pool4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;}
+@media(max-width:800px){.pool4{grid-template-columns:1fr 1fr;}}
+.pool-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px;}
+.pool-card-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase;}
+.pool-item{background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:7px 9px;cursor:pointer;transition:.2s;position:relative;margin-bottom:5px;}
+.pool-item:last-child{margin-bottom:0;}
+.pool-item:hover:not(.p-used){border-color:var(--purple2);}
+.pool-item.p-sel{border-color:var(--purple);background:rgba(124,111,255,.12);}
+.pool-item.p-next{border-color:var(--yellow);background:rgba(245,158,11,.06);}
+.pool-item.p-used{opacity:.4;cursor:not-allowed;}
+.pool-item.p-warn{border-color:var(--red)!important;background:rgba(239,68,68,.06)!important;}
+.p-dot{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;}
+.p-dot.ok{background:var(--green2);}
+.p-dot.sel{background:var(--purple2);box-shadow:0 0 5px var(--purple);}
+.p-dot.used{background:var(--muted2);}
+.p-dot.warn{background:var(--red2);}
+.p-name{font-size:12px;font-weight:700;color:#fff;padding-right:14px;}
+.p-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.p-tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-top:3px;}
+.pt-ok{background:rgba(34,197,94,.15);color:var(--green2);}
+.pt-w{background:rgba(245,158,11,.15);color:var(--yellow2);}
+.pt-ng{background:rgba(239,68,68,.15);color:var(--red2);}
+.pt-p{background:rgba(124,111,255,.15);color:var(--purple3);}
+
+/* model grid */
+.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.model-item{background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;transition:.2s;}
+.model-item:hover:not(.m-ng){border-color:var(--purple2);}
+.model-item.m-sel{border-color:var(--purple);background:rgba(124,111,255,.12);}
+.model-item.m-ng{opacity:.35;cursor:not-allowed;}
+
+/* step flow */
+.step{border:1.5px solid var(--border);border-radius:11px;overflow:hidden;transition:.3s;margin-bottom:6px;}
+.step.s-cur{border-color:var(--purple);box-shadow:0 0 16px rgba(124,111,255,.12);}
+.step.s-done{border-color:var(--green);opacity:.8;}
+.step.s-pend{opacity:.35;}
+.step-hd{padding:10px 13px;display:flex;align-items:center;gap:9px;}
+.step.s-cur .step-hd{background:rgba(124,111,255,.06);}
+.step.s-done .step-hd{background:rgba(34,197,94,.04);}
+.step-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;}
+.s-cur .step-num{background:var(--purple);color:#fff;}
+.s-done .step-num{background:var(--green);color:#fff;}
+.s-pend .step-num{background:var(--border);color:var(--muted);}
+.step-body{padding:11px 13px;background:rgba(0,0,0,.15);}
+
+/* checklist */
+.cklist{display:flex;flex-direction:column;gap:0;}
+.cli{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(37,37,69,.4);font-size:12px;cursor:pointer;}
+.cli:last-child{border:none;}
+.clb{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px;}
+.clb.on{background:var(--purple);border-color:var(--purple);}
+.cli-body{flex:1;}
+.cli-label{font-weight:600;}
+.cli-desc{font-size:10px;color:var(--muted);margin-top:1px;}
+.cli.cl-ng .cli-label{color:var(--red2);}
+.cli.cl-warn .cli-label{color:var(--yellow2);}
+.cli.cl-ok .cli-label{color:var(--text);}
+
+/* ip compare */
+.ip-cmp{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;}
+.ip-box{background:var(--bg2);border:1.5px solid var(--border2);border-radius:8px;padding:7px;text-align:center;}
+.ip-box.b{border-color:var(--red2);} .ip-box.a{border-color:var(--green2);}
+.ip-box .ib-lbl{font-size:9px;color:var(--muted);margin-bottom:2px;}
+.ip-box .ib-val{font-family:monospace;font-size:11px;font-weight:700;}
+.ip-box.b .ib-val{color:var(--red2);} .ip-box.a .ib-val{color:var(--green2);}
+
+/* info row */
+.info-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
+.info-cell{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:6px 9px;}
+.ic-lbl{font-size:9px;color:var(--muted);margin-bottom:2px;}
+.ic-val{font-size:11px;font-weight:700;color:#fff;}
+.ic-val.bad{color:var(--red2);} .ic-val.ok{color:var(--green2);} .ic-val.warn{color:var(--yellow2);}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 13px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;filter:none!important;}
+.btn-p{background:var(--purple);color:#fff;}
+.btn-g{background:#16a34a;color:#fff;}
+.btn-w{background:#d97706;color:#fff;}
+.btn-gh{background:var(--border);color:var(--text);}
+.btn-r{background:#dc2626;color:#fff;}
+.btn-sm{padding:5px 9px;font-size:11px;}
+.btn-xs{padding:3px 7px;font-size:10px;border-radius:6px;}
+.btn-full{width:100%;}
+
+/* form */
+.fl{font-size:10px;color:var(--muted);margin-bottom:2px;display:block;letter-spacing:.3px;}
+.fi{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;padding:6px 9px;color:var(--text);font-size:12px;outline:none;transition:.15s;}
+.fi:focus{border-color:var(--purple);}
+.fsel{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;padding:6px 9px;color:var(--text);font-size:12px;outline:none;}
+.fg{margin-bottom:8px;}
+
+/* stats */
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.sbox{flex:1;min-width:75px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 11px;text-align:center;}
+.sv{font-size:20px;font-weight:900;color:var(--purple2);}
+.sl{font-size:10px;color:var(--muted);margin-top:1px;}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.tbl th{background:var(--bg2);color:var(--muted);padding:6px 9px;text-align:left;font-size:10px;font-weight:700;border-bottom:1px solid var(--border);}
+.tbl td{padding:7px 9px;border-bottom:1px solid rgba(37,37,69,.4);vertical-align:middle;}
+.tbl tr:hover td{background:rgba(124,111,255,.03);}
+.tbl tr:last-child td{border-bottom:none;}
+
+/* alert */
+.al{border-radius:8px;padding:7px 11px;font-size:11px;line-height:1.6;margin-bottom:8px;}
+.al-r{background:#1a0808;border-left:3px solid var(--red);color:var(--red2);}
+.al-g{background:#081a08;border-left:3px solid var(--green);color:var(--green2);}
+.al-b{background:#08081a;border-left:3px solid var(--blue);color:var(--blue2);}
+.al-y{background:#1a1208;border-left:3px solid var(--yellow);color:var(--yellow2);}
+.al-p{background:#120a1a;border-left:3px solid var(--purple);color:var(--purple3);}
+
+/* badge */
+.bdg{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;}
+.bdg-g{background:#dcfce7;color:#166534;} .bdg-w{background:#fef3c7;color:#92400e;}
+.bdg-r{background:#fee2e2;color:#991b1b;} .bdg-b{background:#dbeafe;color:#1e40af;}
+.bdg-p{background:#ede9fe;color:#5b21b6;}
+
+/* log */
+.log{padding:4px 7px;border-left:2px solid var(--border2);margin-bottom:2px;font-size:10px;color:var(--muted);line-height:1.5;}
+.log.s{border-color:var(--green);color:var(--green2);} .log.e{border-color:var(--red);color:var(--red2);}
+.log.i{border-color:var(--blue);color:var(--blue2);}  .log.w{border-color:var(--yellow);color:var(--yellow2);}
+.log-t{font-family:monospace;font-size:9px;color:var(--muted2);margin-right:4px;}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:20px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;}
+
+/* timer */
+.timer{font-size:28px;font-weight:900;color:var(--purple2);font-family:monospace;letter-spacing:2px;font-variant-numeric:tabular-nums;}
+
+.div{height:1px;background:var(--border);margin:8px 0;}
+@keyframes spin{to{transform:rotate(360deg);}} .spin{animation:spin .8s linear infinite;display:inline-block;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useMemo } = React;
+
+// ── constants ─────────────────────────────────────────────
+// tag/ok は起動時に is-checker から自動更新。取得失敗時は下記フォールバック（前回確認値）を表示。
+const MODELS = [
+  {id:'pm512',n:'Pro Max',c:'512GB',col:'#a78bfa',ok:true, tag:'+1,200円*', size:'6.9インチディスプレイ', cap:'512gb'},
+  {id:'pm256',n:'Pro Max',c:'256GB',col:'#60a5fa',ok:false,tag:'-300円*',  size:'6.9インチディスプレイ', cap:'256gb'},
+  {id:'pm1tb',n:'Pro Max',c:'1TB',  col:'#34d399',ok:false,tag:'-300円*',  size:'6.9インチディスプレイ', cap:'1tb'},
+  {id:'p512', n:'Pro',    c:'512GB',col:'#fbbf24',ok:true, tag:'+1,200円*',size:'6.3インチディスプレイ', cap:'512gb'},
+  {id:'p1tb', n:'Pro',    c:'1TB',  col:'#f87171',ok:false,tag:'-800円*',  size:'6.3インチディスプレイ', cap:'1tb'},
+  {id:'pm2tb',n:'Pro Max',c:'2TB',  col:'#f87171',ok:false,tag:'-31,300円*',size:'6.9インチディスプレイ', cap:'2tb'},
+];
+// フォールバック相場（is-checker 2026/06/02値・CORSでライブ取得不可時に使用）
+const MARKET_FALLBACK = {
+  'Max|256|シルバー':{type:'Max',cap:'256',color:'シルバー',teika:194800,margin:-300,best:194500},
+  'Max|256|オレンジ':{type:'Max',cap:'256',color:'オレンジ',teika:194800,margin:-300,best:194500},
+  'Max|256|ディープブルー':{type:'Max',cap:'256',color:'ディープブルー',teika:194800,margin:-300,best:194500},
+  'Max|512|シルバー':{type:'Max',cap:'512',color:'シルバー',teika:229800,margin:1200,best:231000},
+  'Max|512|オレンジ':{type:'Max',cap:'512',color:'オレンジ',teika:229800,margin:-2800,best:227000},
+  'Max|512|ディープブルー':{type:'Max',cap:'512',color:'ディープブルー',teika:229800,margin:200,best:230000},
+  'Max|1TB|シルバー':{type:'Max',cap:'1TB',color:'シルバー',teika:264800,margin:-300,best:264500},
+  'Max|1TB|オレンジ':{type:'Max',cap:'1TB',color:'オレンジ',teika:264800,margin:-8300,best:256500},
+  'Max|1TB|ディープブルー':{type:'Max',cap:'1TB',color:'ディープブルー',teika:264800,margin:-300,best:264500},
+  'Max|2TB|シルバー':{type:'Max',cap:'2TB',color:'シルバー',teika:329800,margin:-31300,best:298500},
+  'Pro|256|シルバー':{type:'Pro',cap:'256',color:'シルバー',teika:179800,margin:-300,best:179500},
+  'Pro|512|シルバー':{type:'Pro',cap:'512',color:'シルバー',teika:214800,margin:1200,best:216000},
+  'Pro|512|オレンジ':{type:'Pro',cap:'512',color:'オレンジ',teika:214800,margin:700,best:215500},
+  'Pro|512|ディープブルー':{type:'Pro',cap:'512',color:'ディープブルー',teika:214800,margin:700,best:215500},
+  'Pro|1TB|シルバー':{type:'Pro',cap:'1TB',color:'シルバー',teika:249800,margin:-800,best:249000},
+};
+
+// iPhone 17 Pro 実際のカラー（Apple Store確認済み）
+const COLORS=[
+  {id:'silver', jp:'シルバー',         en:'Silver'},
+  {id:'orange', jp:'コズミックオレンジ',en:'Cosmic Orange'},
+  {id:'blue',   jp:'ディープブルー',    en:'Deep Blue'},
+];
+
+// Apple Store SIMフリー直接URLを生成
+const buildAppleUrl = (model, colorId) => {
+  if(!model || !colorId) return 'https://www.apple.com/jp/shop/buy-iphone/iphone-17-pro';
+  const color = COLORS.find(c=>c.id===colorId);
+  if(!color) return 'https://www.apple.com/jp/shop/buy-iphone/iphone-17-pro';
+  const path = `${model.size}-${model.cap}-${color.jp}-simフリー`;
+  return `https://www.apple.com/jp/shop/buy-iphone/iphone-17-pro/${encodeURIComponent(path)}?bfil=1`;
+};
+const STATUSES=['注文済','請求確定','配送中','配送延期','受取済','買取中','完了'];
+const SC={'注文済':'#60a5fa','請求確定':'#4ade80','配送中':'#fbbf24','配送延期':'#f87171','受取済':'#a78bfa','買取中':'#f472b6','完了':'#9ca3af'};
+
+const INIT_PROXIES=[
+  {id:'vpn_a',n:'VPN-A',t:'SOCKS5',host:'',port:'1080',user:'',pass:''},
+  {id:'vpn_b',n:'VPN-B',t:'SOCKS5',host:'',port:'1080',user:'',pass:''},
+  {id:'vpn_c',n:'VPN-C',t:'HTTP',  host:'',port:'8080',user:'',pass:''},
+  {id:'sim_1',n:'SIM-1',t:'SIM',   host:'',port:'',    user:'',pass:''},
+  {id:'sim_2',n:'SIM-2',t:'SIM',   host:'',port:'',    user:'',pass:''},
+];
+const INIT_ACCS=[
+  {id:1,n:'アカウントA',t:'Apple ID',email:'',tel:'',months:8,st:'ok'},
+  {id:2,n:'アカウントB',t:'Apple ID',email:'',tel:'',months:6,st:'ok'},
+  {id:3,n:'ゲスト1',    t:'ゲスト',  email:'',tel:'',months:0,st:'ok'},
+  {id:4,n:'ゲスト2',    t:'ゲスト',  email:'',tel:'',months:0,st:'ok'},
+];
+const INIT_ADDRS=[
+  {id:1,n:'住所A',name:'',zip:'',addr:'',used:false},
+  {id:2,n:'住所B',name:'',zip:'',addr:'',used:false},
+  {id:3,n:'住所C',name:'',zip:'',addr:'',used:false},
+  {id:4,n:'住所D',name:'',zip:'',addr:'',used:false},
+  {id:5,n:'住所E',name:'',zip:'',addr:'',used:false},
+];
+const INIT_CARDS=[
+  {id:1,n:'カードA',brand:'VISA',  last4:'',type:'ビジネス'},
+  {id:2,n:'カードB',brand:'AMEX',  last4:'',type:'ビジネス'},
+  {id:3,n:'カードC',brand:'Master',last4:'',type:'個人'},
+  {id:4,n:'カードD',brand:'JCB',   last4:'',type:'個人'},
+];
+
+const ls  = (k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
+const lss = (k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const now  = ()=>new Date().toLocaleString('ja-JP');
+const nowt = ()=>new Date().toLocaleTimeString('ja-JP');
+
+// ── IP hook ───────────────────────────────────────────────
+function useIP(){
+  const [ip,  setIp]  = useState(ls('v3_ip',''));
+  const [prev,setPrev]= useState(ls('v3_ip_prev',''));
+  const [busy,setBusy]= useState(false);
+  const changed = !!(ip && prev && ip!==prev);
+  const same    = !!(ip && prev && ip===prev);
+  const check = useCallback(async()=>{
+    setBusy(true);
+    try{
+      const r=await fetch('https://api.ipify.org?format=json');
+      const d=await r.json();
+      setPrev(ip);  lss('v3_ip_prev',ip);
+      setIp(d.ip);  lss('v3_ip',d.ip);
+    }catch{setIp('失敗');}
+    setBusy(false);
+  },[ip]);
+  return {ip,prev,busy,changed,same,check};
+}
+
+// ── Timer ─────────────────────────────────────────────────
+function Timer(){
+  const [t,setT]=useState('--:--:--');
+  useEffect(()=>{
+    const f=()=>{
+      const n=new Date(),x=new Date();x.setHours(2,0,0,0);
+      if(n>=x)x.setDate(x.getDate()+1);
+      const d=x-n;
+      setT([d/3600000,d%3600000/60000,d%60000/1000].map(v=>String(Math.floor(v)).padStart(2,'0')).join(':'));
+    };f();const id=setInterval(f,1000);return()=>clearInterval(id);
+  },[]);
+  return <span className="timer">{t}</span>;
+}
+
+// ── RISK ENGINE ───────────────────────────────────────────
+// リスクスコアを計算し、各項目の詳細を返す
+function calcRisk({selPx, selAc, selAd, selCd, ip, proxies, accs, addrs, cards, orders}){
+  const px = proxies.find(p=>p.id===selPx);
+  const ac = accs.find(a=>a.id===selAc);
+  const ad = addrs.find(a=>a.id===selAd);
+  const cd = cards.find(c=>c.id===selCd);
+  const last= orders[0];
+  const recent3 = orders.slice(0,3); // 直近3注文
+
+  const items = [];
+  let totalPenalty = 0;
+
+  // ── 層1: アカウント ──
+  const accMonths = ac?.months||0;
+  if(!ac){ items.push({layer:1,id:'acc_none',sev:'ng',icon:'👤',title:'アカウント未選択',desc:'アカウントを選択してください',action:null,penalty:20}); totalPenalty+=20; }
+  else if(ac.st==='ban'){ items.push({layer:1,id:'acc_ban',sev:'ng',icon:'🚫',title:'BAN済アカウント',desc:'このアカウントは使用不可です',action:'別アカウントに切替',penalty:30}); totalPenalty+=30; }
+  else if(accMonths<3){ items.push({layer:1,id:'acc_new',sev:'ng',icon:'👤',title:'アカウント作成から3ヶ月未満',desc:`使用歴${accMonths}ヶ月 — 新しすぎると島流し確率が大幅上昇`,action:'6ヶ月以上のアカウントを使用',penalty:25}); totalPenalty+=25; }
+  else if(accMonths<6){ items.push({layer:1,id:'acc_young',sev:'warn',icon:'👤',title:`アカウント使用歴${accMonths}ヶ月（推奨: 6ヶ月以上）`,desc:'6ヶ月未満のアカウントはリスクが高い',action:'可能なら6ヶ月以上のIDを使用',penalty:10}); totalPenalty+=10; }
+  else{ items.push({layer:1,id:'acc_ok',sev:'ok',icon:'👤',title:`アカウント使用歴${accMonths}ヶ月 ✓`,desc:'十分な使用履歴があります',action:null,penalty:0}); }
+
+  // 同一アカウントの連続使用
+  if(last && ac && last.accId===ac.id){
+    items.push({layer:1,id:'acc_dup',sev:'ng',icon:'🔁',title:'前回と同じアカウント',desc:'連続使用で島流しリスク上昇',action:'別アカウントに切替',penalty:20});
+    totalPenalty+=20;
+  } else if(ac){ items.push({layer:1,id:'acc_fresh',sev:'ok',icon:'🔁',title:'アカウントは前回と異なる ✓',desc:'',action:null,penalty:0}); }
+
+  // ── 層2: 決済 ──
+  if(!cd){ items.push({layer:2,id:'card_none',sev:'warn',icon:'💳',title:'カード未選択',desc:'',action:null,penalty:5}); totalPenalty+=5; }
+  else {
+    const cardUsedInRecent = recent3.some(o=>o.cardId===cd.id);
+    if(cardUsedInRecent){ items.push({layer:2,id:'card_dup',sev:'ng',icon:'💳',title:'直近3注文と同じカード',desc:'カード番号でアカウントが紐づけられるリスク',action:'別カードに切替',penalty:20}); totalPenalty+=20; }
+    else{ items.push({layer:2,id:'card_ok',sev:'ok',icon:'💳',title:`${cd.n}（${cd.type}） — カード切替 ✓`,desc:'前回と異なるカードを使用',action:null,penalty:0}); }
+    if(cd.type==='個人'){ items.push({layer:2,id:'card_personal',sev:'warn',icon:'💳',title:'個人カードの転売利用は規約違反',desc:'ビジネスカードへの切替を推奨',action:'ビジネスカードに変更',penalty:8}); totalPenalty+=8; }
+  }
+
+  // ── 層3: 住所 ──
+  if(!ad){ items.push({layer:3,id:'addr_none',sev:'ng',icon:'🏠',title:'住所未選択',desc:'',action:null,penalty:15}); totalPenalty+=15; }
+  else {
+    // 郵便番号重複チェック（過去全注文）
+    const zipDupInOrders = orders.some(o=>o.addrZip===ad.zip && o.addrId!==ad.id);
+    const zipDupInPool   = addrs.filter(a=>a.id!==ad.id&&a.zip===ad.zip&&ad.zip).length>0;
+    if(ad.zip && zipDupInOrders){ items.push({layer:3,id:'zip_dup_hist',sev:'ng',icon:'📮',title:'過去注文と郵便番号が重複',desc:`〒${ad.zip} は以前の注文で使用済み`,action:'別の郵便番号エリアの住所を使用',penalty:25}); totalPenalty+=25; }
+    else if(ad.zip && zipDupInPool){ items.push({layer:3,id:'zip_dup_pool',sev:'warn',icon:'📮',title:'プール内に同一郵便番号の住所あり',desc:'使用しているものは異なりますが混同注意',action:'確認してください',penalty:8}); totalPenalty+=8; }
+    else if(!ad.zip){ items.push({layer:3,id:'zip_empty',sev:'warn',icon:'📮',title:'郵便番号が未設定',desc:'設定タブで郵便番号を登録してください',action:'郵便番号を登録',penalty:10}); totalPenalty+=10; }
+    else{ items.push({layer:3,id:'zip_ok',sev:'ok',icon:'📮',title:`〒${ad.zip} — 郵便番号ユニーク ✓`,desc:'過去注文と郵便番号が重複していません',action:null,penalty:0}); }
+
+    // 受取人名重複チェック
+    const nameDup = orders.some(o=>o.recipientName&&ad.name&&o.recipientName===ad.name&&o.addrId!==ad.id);
+    if(nameDup){ items.push({layer:3,id:'name_dup',sev:'warn',icon:'📛',title:'受取人名が過去注文と重複',desc:'同一人物と判定されるリスク',action:'受取人名をわずかに変える',penalty:12}); totalPenalty+=12; }
+    else if(ad.name){ items.push({layer:3,id:'name_ok',sev:'ok',icon:'📛',title:'受取人名ユニーク ✓',desc:'',action:null,penalty:0}); }
+  }
+
+  // ── 層4: IP・端末 ──
+  if(!ip.ip){ items.push({layer:4,id:'ip_unk',sev:'ng',icon:'🌐',title:'IP未確認',desc:'必ずIP確認を実行してください',action:'IPを確認する',penalty:20}); totalPenalty+=20; }
+  else if(ip.same){ items.push({layer:4,id:'ip_same',sev:'ng',icon:'🌐',title:'IPが前回と同じ',desc:`${ip.ip} — プロキシが切り替わっていません`,action:'プロキシを切り替えてIPを変える',penalty:30}); totalPenalty+=30; }
+  else if(ip.changed){ items.push({layer:4,id:'ip_ok',sev:'ok',icon:'🌐',title:`IP変更確認済 ✓ ${ip.prev||'?'} → ${ip.ip}`,desc:'',action:null,penalty:0}); }
+  else{ items.push({layer:4,id:'ip_new',sev:'warn',icon:'🌐',title:`現在のIP: ${ip.ip}（前回比較なし）`,desc:'初回の場合は問題ありません',action:null,penalty:3}); totalPenalty+=3; }
+
+  // プロキシ
+  if(!px){ items.push({layer:4,id:'px_none',sev:'ng',icon:'🔌',title:'プロキシ未選択',desc:'',action:null,penalty:10}); totalPenalty+=10; }
+  else if(last && px && last.proxyId===px.id){ items.push({layer:4,id:'px_dup',sev:'warn',icon:'🔌',title:'前回と同じプロキシ',desc:'同じプロキシからの連続注文はリスク',action:'別プロキシに切替',penalty:12}); totalPenalty+=12; }
+  else if(px){ items.push({layer:4,id:'px_ok',sev:'ok',icon:'🔌',title:`${px.n}（${px.t}） — プロキシ切替 ✓`,desc:'',action:null,penalty:0}); }
+
+  // ── 層5: 購入行動 ──
+  // 注文間隔
+  if(last){
+    const lastTime = new Date(last.rawTime||0);
+    const diffMin  = (Date.now()-lastTime)/(1000*60);
+    if(diffMin < 5){ items.push({layer:5,id:'interval_short',sev:'ng',icon:'⏱',title:`前回注文から${Math.floor(diffMin)}分しか経過していない`,desc:'短時間連続注文は行動パターン検知のリスク',action:'最低10〜15分は間隔を空ける',penalty:20}); totalPenalty+=20; }
+    else if(diffMin < 15){ items.push({layer:5,id:'interval_warn',sev:'warn',icon:'⏱',title:`前回注文から${Math.floor(diffMin)}分（推奨: 15分以上）`,desc:'',action:'もう少し間隔を空けると安全',penalty:8}); totalPenalty+=8; }
+    else{ items.push({layer:5,id:'interval_ok',sev:'ok',icon:'⏱',title:`前回注文から${Math.floor(diffMin)}分経過 ✓`,desc:'',action:null,penalty:0}); }
+  }
+
+  // ── 層6: 電話番号 ──
+  if(ac && ac.tel){
+    const telDup = recent3.some(o=>o.tel&&o.tel===ac.tel&&o.accId!==ac.id);
+    if(telDup){ items.push({layer:6,id:'tel_dup',sev:'ng',icon:'📱',title:'電話番号が直近注文と重複',desc:'電話番号でアカウント間が紐づけられる',action:'格安SIMで別番号を使用',penalty:18}); totalPenalty+=18; }
+    else{ items.push({layer:6,id:'tel_ok',sev:'ok',icon:'📱',title:'電話番号ユニーク ✓',desc:'',action:null,penalty:0}); }
+  } else {
+    items.push({layer:6,id:'tel_empty',sev:'warn',icon:'📱',title:'電話番号未設定',desc:'設定タブでアカウントに電話番号を登録すると重複チェックができます',action:null,penalty:5});
+    totalPenalty+=5;
+  }
+
+  // ── 層7: クロス照合 ──
+  // メールアドレス重複
+  if(ac && ac.email){
+    const emailDup = recent3.some(o=>o.email&&o.email===ac.email&&o.accId!==ac.id);
+    if(emailDup){ items.push({layer:7,id:'email_dup',sev:'ng',icon:'📧',title:'メールアドレスが直近注文と重複',desc:'',action:'Yahooエイリアスで別メアドを使用',penalty:15}); totalPenalty+=15; }
+    else{ items.push({layer:7,id:'email_ok',sev:'ok',icon:'📧',title:'メールアドレスユニーク ✓',desc:'',action:null,penalty:0}); }
+  } else {
+    items.push({layer:7,id:'email_empty',sev:'warn',icon:'📧',title:'メールアドレス未設定',desc:'アカウントにメールアドレスを登録するとチェックできます',action:null,penalty:3});
+    totalPenalty+=3;
+  }
+
+  const score = Math.max(0, 100-totalPenalty);
+  const grade = score>=80?'safe':score>=50?'caution':'danger';
+  return {score, grade, items, penalty:totalPenalty};
+}
+
+// ── Risk Display ──────────────────────────────────────────
+function RiskPanel({risk}){
+  const {score,grade,items} = risk;
+  const colors = {safe:'#22c55e',caution:'#f59e0b',danger:'#ef4444'};
+  const labels = {safe:'🟢 安全圏',caution:'🟡 要注意',danger:'🔴 危険'};
+  const ng   = items.filter(i=>i.sev==='ng').length;
+  const warn = items.filter(i=>i.sev==='warn').length;
+  const ok   = items.filter(i=>i.sev==='ok').length;
+
+  return (
+    <div className={`risk-box ${grade}`}>
+      <div style={{display:'flex',alignItems:'center',marginBottom:8}}>
+        <span className={`risk-score ${grade}`}>{score}</span>
+        <div style={{marginLeft:10}}>
+          <div style={{fontWeight:800,fontSize:14,color:colors[grade]}}>{labels[grade]}</div>
+          <div style={{fontSize:10,color:'#888',marginTop:2}}>
+            問題なし {ok} ／ 注意 {warn} ／ 危険 {ng} 項目
+          </div>
+        </div>
+        <div style={{marginLeft:'auto',fontSize:11,color:'#555'}}>島流しリスクスコア</div>
+      </div>
+      <div className="risk-bar">
+        <div className="risk-fill" style={{width:`${score}%`,background:`linear-gradient(90deg,${colors[grade]},${colors[grade]}88)`}}/>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:0}}>
+        {items.map(it=>(
+          <div key={it.id} className="risk-item">
+            <span className="ri-icon">{it.icon}</span>
+            <div className="ri-body">
+              <div className="ri-title">
+                {it.title}
+                <span className={`ri-badge ${it.sev==='ok'?'rb-ok':it.sev==='warn'?'rb-warn':'rb-ng'}`}>
+                  {it.sev==='ok'?'✓ OK':it.sev==='warn'?'⚠ 注意':'✕ 危険'}
+                </span>
+              </div>
+              {it.desc && <div className="ri-desc">{it.desc}</div>}
+              {it.action && <div className={`ri-action ${it.sev==='ng'?'warn':'act'}`}>→ {it.action}</div>}
+            </div>
+            <div style={{fontSize:10,color:it.penalty>0?'#f87171':'#4ade80',fontFamily:'monospace',flexShrink:0}}>
+              {it.penalty>0?`-${it.penalty}`:'+0'}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── VPN Modal ─────────────────────────────────────────────
+function VpnModal({proxy,onDone}){
+  const isSIM=proxy.t==='SIM';
+  const steps=isSIM
+    ?['SIMを挿したスマホを用意','機内モードをONにして5秒待つ','機内モードをOFFにしてデータ通信を待つ','スマホのブラウザからApple Storeで注文']
+    :[`SwitchyOmegaアイコンをクリック`,`プロファイル「${proxy.n}」を選択`,`IPが変わったことをこのツールで確認`];
+  return(
+    <div className="overlay" onClick={onDone}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{fontWeight:800,fontSize:15,color:'#fff',marginBottom:12}}>🔄 {proxy.n} に切り替える</div>
+        {!isSIM&&proxy.host&&<div className="al al-g" style={{marginBottom:10}}><div style={{fontFamily:'monospace',fontSize:11}}>HOST: {proxy.host} / PORT: {proxy.port} ({proxy.t}){proxy.user&&<><br/>USER: {proxy.user}</>}</div></div>}
+        {!isSIM&&!proxy.host&&<div className="al al-y" style={{marginBottom:10}}>⚠ ホスト未設定 — 設定タブから登録してください</div>}
+        {steps.map((s,i)=>(
+          <div key={i} style={{display:'flex',gap:9,alignItems:'flex-start',marginBottom:9}}>
+            <div style={{width:20,height:20,borderRadius:'50%',background:'#7c6fff',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:800,flexShrink:0,marginTop:1}}>{i+1}</div>
+            <div style={{fontSize:13,color:'#ddd',lineHeight:1.5}}>{s}</div>
+          </div>
+        ))}
+        <div className="div"/>
+        {!isSIM&&<div style={{marginBottom:10}}><a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',fontSize:11}}>→ SwitchyOmega設定を開く ↗</a></div>}
+        <button className="btn btn-g btn-full" onClick={onDone}>✓ 切替完了 — IPを確認する</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Pool Panel ────────────────────────────────────────────
+function Pool({title,icon,items,selId,onSel,risk,nameKey='n',subFn=null,usedKey='used'}){
+  return(
+    <div className="pool-card">
+      <div className="pool-card-title">{icon} {title}</div>
+      {items.map(item=>{
+        const used=item[usedKey]||item.st==='ban';
+        const sel=item.id===selId;
+        const ri=risk?.items?.find(r=>r.id?.startsWith('acc')&&r.sev==='ng');
+        const hasWarn=risk?.items?.some(r=>['acc_ban','acc_new','acc_dup','zip_dup_hist','card_dup','tel_dup'].includes(r.id)&&r.sev!=='ok');
+        return(
+          <div key={item.id}
+            className={`pool-item${sel?' p-sel':''} ${used&&!sel?' p-used':''}`}
+            onClick={()=>!used&&onSel(item.id)}>
+            <div className={`p-dot${sel?' sel':used?' used':' ok'}`}/>
+            <div className="p-name">{item[nameKey]}</div>
+            {subFn&&<div className="p-sub">{subFn(item)}</div>}
+            {item.months!==undefined&&<div className="p-sub">{item.months}ヶ月 / {item.t}</div>}
+            {item.zip&&<div className="p-sub">〒{item.zip}</div>}
+            {item.brand&&<div className="p-sub">{item.brand} {item.last4?`*${item.last4}`:''} / {item.type}</div>}
+            {item.host!==undefined&&<div className="p-sub">{item.host||'未設定'} ({item.t})</div>}
+            {sel&&<span className="p-tag pt-p">使用中</span>}
+            {!sel&&!used&&item.months!==undefined&&(item.months>=6?<span className="p-tag pt-ok">✓{item.months}ヶ月</span>:<span className="p-tag pt-w">{item.months}ヶ月</span>)}
+            {used&&!sel&&<span className="p-tag pt-ng">使用済</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Tab Pickup ────────────────────────────────────────────
+function TabPickup({orders,setOrders,proxies,accs,addrs,cards,setAddrs,ip,market={},marketAt='',marketBusy=false,loadMarket}){
+  const [pxId,setPx]=useState(ls('v3_sel_px',''));
+  const [acId,setAc]=useState(ls('v3_sel_ac',''));
+  const [adId,setAd]=useState(ls('v3_sel_ad',''));
+  const [cdId,setCd]=useState(ls('v3_sel_cd',''));
+  const [model,setModel]=useState(null);
+  const [color,setColor]=useState(COLORS[0].id);
+  const [memo, setMemo] =useState('');
+  const [step, setStep] =useState(1);
+  const [ipBefore,setIpBefore]=useState('');
+  const [checks,setChecks]=useState({});
+  const [vpnModal,setVpnModal]=useState(null);
+  const [logs,setLogs]=useState([]);
+
+  const sP=v=>{setPx(v);lss('v3_sel_px',v);};
+  const sA=v=>{setAc(v);lss('v3_sel_ac',v);};
+  const sD=v=>{setAd(v);lss('v3_sel_ad',v);};
+  const sC=v=>{setCd(v);lss('v3_sel_cd',v);};
+
+  const addLog=(msg,t='i')=>{const time=nowt();setLogs(p=>[{time,msg,t},...p].slice(0,50));};
+
+  // 自動初期選択
+  useEffect(()=>{
+    const last=orders[0];
+    if(!pxId){const p=proxies.find(p=>p.id!==last?.proxyId)||proxies[0];if(p)sP(p.id);}
+    if(!acId){const a=accs.find(a=>a.st!=='ban'&&a.id!==last?.accId)||accs[0];if(a)sA(a.id);}
+    if(!adId){const a=addrs.find(a=>!a.used);if(a)sD(a.id);}
+    if(!cdId){const c=cards.find(c=>c.id!==orders.slice(0,3).map(o=>o.cardId).find(id=>id===c.id))||cards[0];if(c)sC(c.id);}
+  },[]);
+
+  const risk = useMemo(()=>calcRisk({selPx:pxId,selAc:acId,selAd:adId,selCd:cdId,ip,proxies,accs,addrs,cards,orders}),[pxId,acId,adId,cdId,ip.ip,ip.same,orders]);
+
+  const px=proxies.find(p=>p.id===pxId);
+  const ac=accs.find(a=>a.id===acId);
+  const ad=addrs.find(a=>a.id===adId);
+  const cd=cards.find(c=>c.id===cdId);
+  const last=orders[0];
+
+  const onSwitchVpn=()=>{
+    if(!px)return alert('プロキシを選択');
+    setIpBefore(ip.ip);
+    setVpnModal(px);
+    addLog(`プロキシ切替: ${px.n}`,'i');
+    // 3秒後に自動でIP再確認
+    setTimeout(()=>{
+      ip.check();
+      addLog(`自動IP確認 — ${px.n}の切替完了を検証中...`,'i');
+    }, 3000);
+  };
+  const onCheckIp=async()=>{ await ip.check(); };
+  useEffect(()=>{
+    if(step===2&&ip.changed){addLog(`IP変更確認: ${ip.prev}→${ip.ip}`,'s');setStep(3);}
+    if(step===2&&ip.same&&ip.ip){addLog('警告: IPが変わっていません','w');}
+  },[ip.ip]);
+
+  const onRecord=()=>{
+    if(!model)return alert('モデルを選択してください');
+    const colorObj = COLORS.find(c=>c.id===color);
+
+    // 管理ツール連携用フォーマットに変換
+    const statusToStep = {'注文済':'order','請求確定':'invoiced','配送中':'shipping','配送延期':'delayed','受取済':'received','買取中':'kaitori','完了':'done'};
+    const mgmtOrder = {
+      id: Date.now(),
+      model: `${model.n} ${model.c}`,
+      orderDate: new Date().toISOString().split('T')[0],
+      gmailAccount: ac?.email || '',
+      kaitori: 'モバイルミックス',
+      price: '',
+      trackingId: '',
+      deliveryDate: '',
+      orderNumber: '',
+      memo: `[ピックアップ] ${colorObj?.jp||''} / ${px?.n||''} / IP:${ip.ip} / スコア${risk.score} / ${memo||''}`.trim(),
+      step: 'order',
+      profit: '',
+      payments: [],
+      // 拡張情報（管理ツールが無視するが保持）
+      _fromPickup: true,
+      _proxy: px?.n,
+      _ip: ip.ip,
+      _riskScore: risk.score,
+      _appleUrl: buildAppleUrl(model, color),
+      _color: colorObj?.jp,
+    };
+    // 共有キューに書き込み（管理ツールが取り込む）
+    try {
+      const queue = JSON.parse(localStorage.getItem('pickup_queue')||'[]');
+      queue.push(mgmtOrder);
+      localStorage.setItem('pickup_queue', JSON.stringify(queue));
+      localStorage.setItem('pickup_queue_ts', new Date().toISOString());
+    } catch(e) {}
+
+    const o={
+      id:Date.now()+1, no:orders.length+1,
+      model:`${model.n} ${model.c}`,
+      color: colorObj ? colorObj.jp : color,
+      appleUrl: buildAppleUrl(model, color),
+      memo,
+      proxy:px?.n||'—',proxyId:pxId,
+      account:ac?.n||'—',accId:acId,
+      address:ad?`${ad.n}（〒${ad.zip||'?'}）`:'—',addrId:adId,addrZip:ad?.zip||'',
+      recipientName:ad?.name||'',
+      card:cd?.n||'—',cardId:cdId,
+      tel:ac?.tel||'',email:ac?.email||'',
+      ip:ip.ip,status:'注文済',
+      time:now(),rawTime:new Date().toISOString(),profit:0,
+      riskScore:risk.score,
+    };
+    setOrders(p=>[o,...p]);
+    if(ad)setAddrs(p=>p.map(a=>a.id===ad.id?{...a,used:true}:a));
+    addLog(`✓ 注文 #${o.no}: ${o.model} / ${o.proxy} / スコア${risk.score}`,'s');
+    setStep(4);setMemo('');setChecks({});
+  };
+
+  const onNext=()=>{
+    const last2=orders[0];
+    const nextPx=proxies.find(p=>p.id!==last2?.proxyId)||proxies[0];
+    const nextAd=addrs.find(a=>!a.used);
+    const nextAc=accs.find(a=>a.st!=='ban'&&a.id!==last2?.accId)||accs[0];
+    const nextCd=cards.find(c=>c.id!==last2?.cardId)||cards[0];
+    if(nextPx)sP(nextPx.id);
+    if(nextAd)sD(nextAd.id);
+    if(nextAc)sA(nextAc.id);
+    if(nextCd)sC(nextCd.id);
+    setIpBefore(ip.ip);setModel(null);setChecks({});setStep(1);
+    addLog('次の注文を準備 — リソースを自動切替','i');
+  };
+
+  // チェックリスト（リスクエンジンと連動）
+  const cklist=[
+    {k:'px',  l:'プロキシを切り替えた',       d:'SwitchyOmega or SIM機内モード',  sev:risk.items.find(r=>r.id==='px_dup')?.sev||'ok'},
+    {k:'ip',  l:'IPが前回と異なることを確認',  d:'IP確認ボタンで変化を確認済み',   sev:ip.same?'ng':ip.changed?'ok':'warn'},
+    {k:'zip', l:'住所の郵便番号が異なる',       d:'同一郵便番号への連続注文はNG',   sev:risk.items.find(r=>r.id==='zip_dup_hist')?.sev||'ok'},
+    {k:'card',l:'決済カードが異なる',           d:'直近3注文と異なるカードを使用',  sev:risk.items.find(r=>r.id==='card_dup')?.sev||'ok'},
+    {k:'tel', l:'電話番号が異なる',             d:'格安SIMで番号を分散',            sev:risk.items.find(r=>r.id==='tel_dup')?.sev||'ok'},
+    {k:'email',l:'メールアドレスが異なる',      d:'Yahooエイリアスで分散',          sev:risk.items.find(r=>r.id==='email_dup')?.sev||'ok'},
+    {k:'name',l:'受取人名が他と重複していない', d:'全く同じ名前の連続使用を避ける', sev:risk.items.find(r=>r.id==='name_dup')?.sev||'ok'},
+    {k:'acc', l:'アカウントが6ヶ月以上',       d:'古いアカウントほど信頼度が高い',  sev:risk.items.find(r=>['acc_new','acc_young'].includes(r.id))?.sev||'ok'},
+  ];
+  const allOk=cklist.every(c=>checks[c.k]);
+  const ngCnt=cklist.filter(c=>!checks[c.k]&&c.sev==='ng').length;
+
+  // ── 利益シミュレーション（選択モデル×カラーの相場を引く） ──
+  const colorJp = COLORS.find(c=>c.id===color)?.jp || '';
+  const sim = React.useMemo(()=>{
+    if(!model) return null;
+    const type = model.n.includes('Max')?'Max':'Pro';
+    const cap = model.c.replace('GB','').replace('TB','TB');
+    // 相場キーを type+cap一致・color部分一致で検索
+    const entries = Object.values(market).filter(e=>e.type===type && (e.cap===model.c.replace('GB','')+'' || e.cap===model.c || e.cap===cap));
+    if(!entries.length) return null;
+    // カラー部分一致（オレンジ⊂コズミックオレンジ 等）を優先、なければ最良
+    const norm=s=>s.replace(/コズミック|ディープ/g,'');
+    let hit = entries.find(e=> norm(colorJp).includes(norm(e.color)) || norm(e.color).includes(norm(colorJp)));
+    if(!hit) hit = entries.reduce((a,b)=>b.margin>a.margin?b:a);
+    return hit;
+  },[model,colorJp,market]);
+  const giftBonus = sim ? Math.round(sim.teika*0.05) : 0; // ギフトカード5%還元
+  const netProfit = sim ? sim.margin + giftBonus : 0;
+
+  // ── 作戦ダッシュボード計算 ──
+  // 素の差益（margin）を主軸にソート。ギフト還元(net)は参考値として保持。
+  // ギフト5%は定価比例なので、これでソートすると高額モデルが不当に上位化するため使わない。
+  const ranking = React.useMemo(()=>{
+    return Object.values(market)
+      .map(e=>({...e, net: e.margin + Math.round(e.teika*0.05)}))
+      .sort((a,b)=> b.margin-a.margin || a.teika-b.teika); // 同差益なら資金拘束が小さい方を優先
+  },[market]);
+  const bestPick = ranking[0];
+  const profitable = ranking.filter(r=>r.margin>0); // 黒字判定は素の差益で
+
+  // 安全キャパシティ：各リソースの利用可能数の最小値がボトルネック
+  const capacity = React.useMemo(()=>{
+    const okProxies = proxies.length;
+    const okAccs = accs.filter(a=>a.st!=='ban').length;
+    const freeAddrs = addrs.filter(a=>!a.used).length;
+    const okCards = cards.length;
+    const res = [
+      {label:'プロキシ', n:okProxies, icon:'🌐'},
+      {label:'アカウント', n:okAccs, icon:'👤'},
+      {label:'住所(残)', n:freeAddrs, icon:'🏠'},
+      {label:'カード', n:okCards, icon:'💳'},
+    ];
+    const bottleneck = res.reduce((a,b)=>b.n<a.n?b:a);
+    return { safe: bottleneck.n, bottleneck, res };
+  },[proxies,accs,addrs,cards]);
+  const projectedProfit = bestPick ? capacity.safe * bestPick.net : 0;
+
+  // 最適な次の一手：ベスト相場に合致するモデル/カラーを特定
+  // type厳密一致（'Pro'が'Pro Max'に部分一致するのを防ぐ）+ 容量一致
+  const modelTypeName = bestPick ? (bestPick.type==='Max'?'Pro Max':bestPick.type==='Pro'?'Pro':bestPick.type) : '';
+  const bestModel = bestPick ? MODELS.find(m=>m.n===modelTypeName && m.c.includes(bestPick.cap)) : null;
+  const bestColorId = bestPick ? (COLORS.find(c=>{
+    const norm=s=>s.replace(/コズミック|ディープ/g,'');
+    return norm(c.jp).includes(norm(bestPick.color))||norm(bestPick.color).includes(norm(c.jp));
+  })?.id) : null;
+  const applyBestPick = ()=>{
+    if(bestModel){ setModel(bestModel); if(bestColorId) setColor(bestColorId); addLog(`最適提案を適用: ${bestModel.n} ${bestModel.c} ${bestPick.color}`,'s'); }
+  };
+
+  return(
+    <div>
+      {/* 相場更新バー */}
+      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px'}}>
+        <span style={{fontSize:11,fontWeight:700,color:'var(--purple2)'}}>📊 相場連動</span>
+        <span style={{fontSize:10,color:'var(--muted)'}}>
+          {marketBusy?'取得中...':marketAt?`最終更新 ${marketAt}`:'未取得（is-checker.com）'}
+        </span>
+        {Object.keys(market).length>0 && <span style={{fontSize:10,color:'var(--green2)'}}>✓ {Object.keys(market).length}件</span>}
+        <button className="btn btn-gh btn-xs" style={{marginLeft:'auto'}} onClick={loadMarket} disabled={marketBusy}>
+          {marketBusy?'⏳':'🔄 相場を再取得'}
+        </button>
+        <a href="https://is-checker.com/iphone17_beta.html?229" target="_blank" style={{fontSize:10,color:'var(--purple3)',textDecoration:'none'}}>元サイト ↗</a>
+      </div>
+
+      {/* ── 作戦ダッシュボード ── */}
+      <div className="card" style={{marginBottom:10,border:'1.5px solid var(--purple)',background:'linear-gradient(135deg,rgba(124,111,255,.06),rgba(124,111,255,.02))'}}>
+        <div className="card-title">🎯 作戦ダッシュボード</div>
+        <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:10}}>
+          {/* 左: 最適な次の一手 */}
+          <div>
+            {bestPick ? (
+              <div style={{background:'var(--bg2)',border:'1.5px solid var(--green)',borderRadius:10,padding:'10px 12px'}}>
+                <div style={{fontSize:10,color:'var(--muted)',marginBottom:3}}>💡 今の最適解</div>
+                <div style={{fontSize:15,fontWeight:800,color:'#fff',marginBottom:2}}>{bestPick.type==='Max'?'Pro Max':bestPick.type} {bestPick.cap}{/GB|TB/.test(bestPick.cap)?'':'GB'} <span style={{color:'var(--purple3)'}}>{bestPick.color}</span></div>
+                <div style={{fontSize:20,fontWeight:900,fontFamily:'monospace',color:bestPick.margin>0?'var(--green2)':'var(--red2)'}}>
+                  {bestPick.margin>0?'+':''}{bestPick.margin.toLocaleString()}<span style={{fontSize:11,color:'var(--muted)',fontWeight:400}}> 円/台（素の差益）</span>
+                </div>
+                <div style={{fontSize:10,color:'var(--muted)',marginTop:1}}>ギフト5%込なら {bestPick.net>0?'+':''}{bestPick.net.toLocaleString()}円 ・ 定価¥{bestPick.teika.toLocaleString()}</div>
+                <button className="btn btn-g btn-sm btn-full" style={{marginTop:8}} onClick={applyBestPick}>⚡ この構成を適用する</button>
+              </div>
+            ) : (
+              <div style={{fontSize:11,color:'var(--muted)',padding:'20px 0',textAlign:'center'}}>相場データ未取得</div>
+            )}
+          </div>
+          {/* 右: 安全キャパシティ */}
+          <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 12px'}}>
+            <div style={{fontSize:10,color:'var(--muted)',marginBottom:5}}>🛡 安全キャパシティ</div>
+            <div style={{display:'flex',alignItems:'baseline',gap:5,marginBottom:6}}>
+              <span style={{fontSize:24,fontWeight:900,fontFamily:'monospace',color:'var(--purple2)'}}>{capacity.safe}</span>
+              <span style={{fontSize:11,color:'var(--muted)'}}>台まで安全に注文可能</span>
+            </div>
+            <div style={{fontSize:9,color:'var(--red2)',marginBottom:6}}>
+              ⚠ ボトルネック: {capacity.bottleneck.icon}{capacity.bottleneck.label}（{capacity.bottleneck.n}）
+            </div>
+            {bestPick && capacity.safe>0 && (
+              <div style={{fontSize:10,color:'var(--muted)',borderTop:'1px solid var(--border)',paddingTop:6}}>
+                最適構成で完売時 → <span style={{color:projectedProfit>0?'var(--green2)':'var(--red2)',fontWeight:800,fontSize:12}}>{projectedProfit>0?'+':''}¥{projectedProfit.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* 利益ランキング */}
+        {ranking.length>0 && (
+          <div style={{marginTop:10}}>
+            <div style={{fontSize:10,color:'var(--muted)',marginBottom:5}}>📈 利益ランキング（素の差益順・上位）</div>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              {ranking.slice(0,5).map((r,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:11,padding:'4px 8px',borderRadius:6,background:i===0?'rgba(34,197,94,.08)':'var(--bg2)'}}>
+                  <span style={{width:16,color:i===0?'var(--green2)':'var(--muted)',fontWeight:800}}>{i+1}</span>
+                  <span style={{flex:1,color:'#fff'}}>{r.type==='Max'?'Pro Max':r.type} {r.cap}{/GB|TB/.test(r.cap)?'':'GB'} <span style={{color:'var(--muted)'}}>{r.color}</span></span>
+                  <span style={{fontFamily:'monospace',fontWeight:800,color:r.margin>0?'var(--green2)':'var(--red2)'}}>{r.margin>0?'+':''}{r.margin.toLocaleString()}</span>
+                  <span style={{fontFamily:'monospace',fontSize:9,color:'var(--muted)',width:60,textAlign:'right'}}>ギ{r.net>0?'+':''}{(r.net/1000).toFixed(1)}k</span>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:9,color:'var(--muted)',marginTop:5}}>黒字モデル(素の差益): {profitable.length}/{ranking.length}件</div>
+          </div>
+        )}
+      </div>
+
+      {/* stats */}
+      <div className="stats">
+        <div className="sbox"><div className="sv">{orders.length}</div><div className="sl">合計注文</div></div>
+        <div className="sbox"><div className="sv">{orders.filter(o=>o.status==='注文済').length}</div><div className="sl">進行中</div></div>
+        <div className="sbox"><div className="sv" style={{color:'#4ade80'}}>{addrs.filter(a=>!a.used).length}</div><div className="sl">住所残り</div></div>
+        <div className="sbox"><div className="sv" style={{color:risk.grade==='safe'?'#4ade80':risk.grade==='caution'?'#fbbf24':'#f87171'}}>{risk.score}</div><div className="sl">リスクスコア</div></div>
+        <div className="sbox" style={{background:'#0e0e1c'}}><div style={{fontSize:10,color:'#555',marginBottom:1}}>予約まで</div><Timer/></div>
+      </div>
+
+      {/* resource pools */}
+      <div className="pool4">
+        <Pool title="プロキシ" icon="🌐" items={proxies} selId={pxId} onSel={sP} risk={risk}/>
+        <Pool title="アカウント" icon="👤" items={accs}    selId={acId} onSel={sA} risk={risk} usedKey="_x"/>
+        <Pool title="住所"       icon="🏠" items={addrs}   selId={adId} onSel={sD} risk={risk}/>
+        <Pool title="カード"     icon="💳" items={cards}   selId={cdId} onSel={sC} risk={risk} usedKey="_x"/>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'220px 1fr',gap:10}}>
+        {/* 左: モデル */}
+        <div>
+          <div className="card" style={{marginBottom:8}}>
+            <div className="card-title">📱 モデル</div>
+            <div className="model-grid">
+              {MODELS.map(m=>(
+                <div key={m.id} className={`model-item${model?.id===m.id?' m-sel':''}${!m.ok?' m-ng':''}`}
+                  style={{borderColor:model?.id===m.id?m.col:undefined}}
+                  onClick={()=>m.ok&&setModel(m)}>
+                  <div style={{fontSize:11,fontWeight:700,color:m.col}}>{m.n}</div>
+                  <div style={{fontSize:10,color:'#666'}}>{m.c}</div>
+                  <span className={`bdg ${m.ok?'bdg-g':'bdg-r'}`} style={{display:'inline-block',marginTop:3}}>{m.tag}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 利益シミュレーター */}
+          {model && (
+            <div className="card" style={{marginBottom:8,border:`1.5px solid ${netProfit>0?'var(--green)':'var(--red)'}`,background:netProfit>0?'rgba(34,197,94,.05)':'rgba(239,68,68,.05)'}}>
+              <div className="card-title">💰 利益シミュレーション</div>
+              {sim ? (
+                <>
+                  <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:8}}>
+                    <span style={{fontSize:26,fontWeight:900,fontFamily:'monospace',color:netProfit>0?'var(--green2)':'var(--red2)'}}>
+                      {netProfit>0?'+':''}{netProfit.toLocaleString()}
+                    </span>
+                    <span style={{fontSize:11,color:'var(--muted)'}}>円 / 台（ギフト5%込）</span>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,fontSize:10}}>
+                    <div className="info-cell"><div className="ic-lbl">定価</div><div className="ic-val">¥{sim.teika.toLocaleString()}</div></div>
+                    <div className="info-cell"><div className="ic-lbl">最高買取</div><div className="ic-val ok">¥{sim.best.toLocaleString()}</div></div>
+                    <div className="info-cell"><div className="ic-lbl">素の差益</div><div className={`ic-val ${sim.margin>0?'ok':'bad'}`}>{sim.margin>0?'+':''}{sim.margin.toLocaleString()}</div></div>
+                    <div className="info-cell"><div className="ic-lbl">ギフト5%還元</div><div className="ic-val warn">+{giftBonus.toLocaleString()}</div></div>
+                  </div>
+                  <div style={{marginTop:6,fontSize:9,color:'var(--muted)'}}>相場カラー: {sim.color} / {model.n} {model.c}</div>
+                </>
+              ) : (
+                <div style={{fontSize:11,color:'var(--muted)'}}>相場データ未取得。「🔄 相場を再取得」を押してください。</div>
+              )}
+            </div>
+          )}
+          <div className="card" style={{marginBottom:8}}>
+            <div className="card-title">🎨 カラー（iPhone 17 Pro実際）</div>
+            <div style={{display:'flex',flexDirection:'column',gap:5}}>
+              {COLORS.map(c=>(
+                <div key={c.id}
+                  style={{
+                    background: color===c.id ? 'rgba(124,111,255,.15)':'var(--bg2)',
+                    border: `1.5px solid ${color===c.id?'var(--purple)':'var(--border)'}`,
+                    borderRadius:8, padding:'7px 10px', cursor:'pointer',
+                    display:'flex', alignItems:'center', gap:8, transition:'.15s'
+                  }}
+                  onClick={()=>setColor(c.id)}>
+                  <div style={{
+                    width:14,height:14,borderRadius:'50%',flexShrink:0,
+                    background: c.id==='silver'?'#e0e0e8':c.id==='orange'?'#e8804a':'#1a4a7a',
+                    border:'1px solid rgba(255,255,255,.2)'
+                  }}/>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{c.jp}</div>
+                    <div style={{fontSize:9,color:'var(--muted)'}}>{c.en}</div>
+                  </div>
+                  {color===c.id && <span style={{marginLeft:'auto',fontSize:9,color:'var(--purple2)'}}>✓選択中</span>}
+                </div>
+              ))}
+            </div>
+            {model && color && (
+              <div style={{marginTop:8,background:'var(--bg2)',border:'1px solid var(--border2)',borderRadius:6,padding:'5px 8px',fontSize:9,fontFamily:'monospace',color:'var(--muted)',wordBreak:'break-all',lineHeight:1.5}}>
+                {buildAppleUrl(model, color)}
+              </div>
+            )}
+          </div>
+          <div className="card">
+            <div className="card-title">📝 メモ</div>
+            <input className="fi" value={memo} onChange={e=>setMemo(e.target.value)} placeholder="備考など"/>
+          </div>
+        </div>
+
+        {/* 右: フロー */}
+        <div>
+          {/* STEP 1 */}
+          <div className={`step s-${step===1?'cur':step>1?'done':'pend'}`}>
+            <div className="step-hd">
+              <div className="step-num">{step>1?'✓':'1'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>プロキシを切り替える</div>
+                {step>1&&<div style={{fontSize:10,color:'#4ade80'}}>✓ {px?.n} — IP切替済</div>}
+              </div>
+              {step===1&&px&&<span className="bdg bdg-p">{px.n}</span>}
+              {step===1&&risk.items.find(r=>r.id==='px_dup')?.sev==='warn'&&<span className="bdg bdg-w">前回と同じ</span>}
+            </div>
+            {step===1&&(
+              <div className="step-body">
+                {px?<><div className="al al-p" style={{marginBottom:8}}>選択中: <strong>{px.n}</strong>（{px.t}）{!px.host&&<span style={{color:'#fbbf24',marginLeft:6}}>⚠ ホスト未設定</span>}</div>
+                  <button className="btn btn-p btn-full" onClick={onSwitchVpn}>🔄 切替手順を表示</button></>
+                :<div className="al al-y">↑ プールからプロキシを選択</div>}
+              </div>
+            )}
+          </div>
+
+          {/* STEP 2 */}
+          <div className={`step s-${step===2?'cur':step>2?'done':'pend'}`}>
+            <div className="step-hd">
+              <div className="step-num">{step>2?'✓':'2'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>IPアドレスを確認する</div>
+                {step>2&&<div style={{fontSize:10,color:'#4ade80'}}>✓ {ip.prev}→{ip.ip}</div>}
+              </div>
+            </div>
+            {step===2&&(
+              <div className="step-body">
+                <div className="ip-cmp" style={{marginBottom:10}}>
+                  <div className={`ip-box ${ipBefore?'b':''}`}>
+                    <div className="ib-lbl">変更前</div>
+                    <div className="ib-val">{ipBefore||'—'}</div>
+                  </div>
+                  <div style={{textAlign:'center',color:'#555',fontSize:16}}>→</div>
+                  <div className={`ip-box ${ip.changed?'a':''}`}>
+                    <div className="ib-lbl">現在のIP</div>
+                    <div className="ib-val">{ip.busy?<span className="spin">⟳</span>:(ip.ip||'未確認')}</div>
+                  </div>
+                </div>
+                {ip.same&&ip.ip&&<div className="al al-r" style={{marginBottom:8}}>⚠ IPが変わっていません。プロキシを切り替えてください</div>}
+                <button className="btn btn-w btn-full" onClick={onCheckIp} disabled={ip.busy}>
+                  {ip.busy?<span><span className="spin">⟳</span> 確認中...</span>:'🔍 IPを確認する'}
+                </button>
+                <div style={{fontSize:10,color:'#444',marginTop:4,textAlign:'center'}}>変化を確認したら自動でSTEP 3へ</div>
+              </div>
+            )}
+          </div>
+
+          {/* STEP 3 */}
+          <div className={`step s-${step===3?'cur':step>3?'done':'pend'}`}>
+            <div className="step-hd">
+              <div className="step-num">{step>3?'✓':'3'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:13}}>Apple Storeで注文する</div>
+                {step>3&&<div style={{fontSize:10,color:'#4ade80'}}>✓ 注文記録完了</div>}
+              </div>
+              {step===3&&<span className={`bdg ${risk.grade==='safe'?'bdg-g':risk.grade==='caution'?'bdg-w':'bdg-r'}`}>スコア {risk.score}</span>}
+            </div>
+            {step===3&&(
+              <div className="step-body">
+                {/* info row */}
+                <div className="info-row">
+                  {[{l:'プロキシ',v:px?.n,s:!pxId?'bad':'ok'},{l:'アカウント',v:ac?.n,s:!acId?'bad':'ok'},{l:'住所',v:ad?`${ad.n} 〒${ad.zip||'?'}`:'—',s:!adId?'bad':'ok'},{l:'カード',v:cd?.n,s:!cdId?'bad':'ok'},{l:'IP',v:ip.ip,s:ip.changed?'ok':ip.same?'bad':'warn'},{l:'モデル',v:model?`${model.n} ${model.c}`:'未選択',s:model?'ok':'bad'}].map((r,i)=>(
+                    <div key={i} className="info-cell">
+                      <div className="ic-lbl">{r.l}</div>
+                      <div className={`ic-val ${r.s}`}>{r.v||'—'}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* checklist */}
+                <div className="cklist" style={{marginBottom:10}}>
+                  {cklist.map(c=>(
+                    <div key={c.k} className={`cli cl-${checks[c.k]?'ok':c.sev}`} onClick={()=>setChecks(p=>({...p,[c.k]:!p[c.k]}))}>
+                      <div className={`clb${checks[c.k]?' on':''}`}>
+                        {checks[c.k]&&<span style={{fontSize:9,color:'#fff'}}>✓</span>}
+                      </div>
+                      <div className="cli-body">
+                        <div className="cli-label">{c.l}</div>
+                        <div className="cli-desc">{c.d}</div>
+                      </div>
+                      {!checks[c.k]&&c.sev==='ng'&&<span className="bdg bdg-r">要対応</span>}
+                      {!checks[c.k]&&c.sev==='warn'&&<span className="bdg bdg-w">注意</span>}
+                    </div>
+                  ))}
+                </div>
+                {ngCnt>0&&<div className="al al-r" style={{marginBottom:8}}>⚠ {ngCnt}件の危険項目があります。確認してから進めてください</div>}
+                <div style={{display:'grid',gap:6}}>
+                  <button className="btn btn-p btn-full"
+                    onClick={()=>{
+                      const url = buildAppleUrl(model, color);
+                      window.open(url,'_blank');
+                      addLog(`Apple Store直リンクで開く: ${model?.n} ${model?.c} ${COLORS.find(c=>c.id===color)?.jp||''} SIMフリー`,'i');
+                    }}>
+                    🍎 Apple Store（SIMフリー直リンク）を開く
+                  </button>
+                  {model && color && (
+                    <div style={{fontSize:9,color:'var(--muted)',fontFamily:'monospace',wordBreak:'break-all',padding:'3px 6px',background:'var(--bg2)',borderRadius:4}}>
+                      → {buildAppleUrl(model,color)}
+                    </div>
+                  )}
+                  <button className={`btn btn-full ${allOk&&model?'btn-g':'btn-gh'}`} onClick={onRecord} disabled={!model}>
+                    📝 注文完了 — 記録する
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* STEP 4 */}
+          {step===4&&(
+            <div className="card" style={{border:'1.5px solid #22c55e',background:'rgba(34,197,94,.05)'}}>
+              <div style={{textAlign:'center',marginBottom:12}}>
+                <div style={{fontSize:28,margin:'6px 0'}}>🎉</div>
+                <div style={{fontWeight:800,fontSize:13,color:'#4ade80',marginBottom:3}}>注文 #{orders.length} 記録完了！</div>
+                <div style={{fontSize:10,color:'#666',marginBottom:2}}>{orders[0]?.model} / {orders[0]?.color} / {orders[0]?.proxy}</div>
+                <div style={{fontSize:10,color:'#555',marginBottom:2}}>スコア {orders[0]?.riskScore} / IP: {orders[0]?.ip}</div>
+              </div>
+              <div className="al al-g" style={{marginBottom:10,fontSize:11}}>
+                ✅ 管理ツールへの転送データを書き込みました。管理ツールを開くと自動取り込みされます。
+              </div>
+              <div style={{display:'grid',gap:6}}>
+                <button className="btn btn-p btn-full" onClick={onNext}>次の注文を準備する →</button>
+                <button className="btn btn-gh btn-full"
+                  onClick={()=>window.open('./iphone-full.html','_blank')}>
+                  📊 管理ツールで確認する ↗
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* log */}
+          <div className="card" style={{marginTop:8}}>
+            <div className="card-title">📋 ログ</div>
+            {logs.length===0?<div style={{color:'#333',fontSize:11,textAlign:'center',padding:'5px 0'}}>ログなし</div>
+              :logs.slice(0,10).map((l,i)=><div key={i} className={`log ${l.t}`}><span className="log-t">{l.time}</span>{l.msg}</div>)
+            }
+          </div>
+        </div>
+      </div>
+
+      {/* Risk panel */}
+      <div style={{marginTop:10}}>
+        <div className="card-title" style={{fontSize:11,marginBottom:8}}>🎯 島流しリスク詳細分析（7層）</div>
+        <RiskPanel risk={risk}/>
+      </div>
+
+      {vpnModal&&<VpnModal proxy={vpnModal} onDone={()=>{setVpnModal(null);setStep(2);onCheckIp();}}/>}
+    </div>
+  );
+}
+
+// ── Tab Orders ────────────────────────────────────────────
+function TabOrders({orders,setOrders}){
+  const [f,setF]=useState('全て');
+  const upd=(id,k,v)=>setOrders(p=>p.map(o=>o.id===id?{...o,[k]:v}:o));
+  const del=(id)=>{if(confirm('削除？'))setOrders(p=>p.filter(o=>o.id!==id));};
+  const rows=f==='全て'?orders:orders.filter(o=>o.status===f);
+  return(
+    <div>
+      <div className="stats">
+        {['全て',...STATUSES].map(s=>(
+          <div key={s} className="sbox" style={{cursor:'pointer',borderColor:f===s?(SC[s]||'#7c6fff'):'#252545'}} onClick={()=>setF(s)}>
+            <div className="sv" style={{fontSize:18,color:SC[s]||'#a78bfa'}}>{s==='全て'?orders.length:orders.filter(o=>o.status===s).length}</div>
+            <div className="sl">{s}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{overflowX:'auto'}}>
+        <table className="tbl">
+          <thead><tr><th>#</th><th>モデル</th><th>プロキシ</th><th>アカウント</th><th>住所</th><th>カード</th><th>IP</th><th>スコア</th><th>日時</th><th>ステータス</th><th>利益</th><th></th></tr></thead>
+          <tbody>
+            {rows.length===0?<tr><td colSpan={12} style={{textAlign:'center',color:'#444',padding:16}}>注文なし</td></tr>
+              :rows.map(o=>(
+                <tr key={o.id}>
+                  <td style={{color:'#555',fontFamily:'monospace'}}>#{o.no}</td>
+                  <td><span style={{fontWeight:700,color:'#a78bfa'}}>{o.model}</span></td>
+                  <td><span className="bdg bdg-p">{o.proxy}</span></td>
+                  <td>{o.account}</td>
+                  <td style={{color:'#777'}}>{o.address}</td>
+                  <td style={{color:'#777'}}>{o.card}</td>
+                  <td style={{fontFamily:'monospace',color:'#4ade80',fontSize:10}}>{o.ip||'—'}</td>
+                  <td><span style={{fontWeight:700,color:o.riskScore>=80?'#4ade80':o.riskScore>=50?'#fbbf24':'#f87171'}}>{o.riskScore||'—'}</span></td>
+                  <td style={{fontSize:10,color:'#555',whiteSpace:'nowrap'}}>{o.time}</td>
+                  <td><select className="fsel" style={{padding:'2px 5px',fontSize:10,width:82}} value={o.status} onChange={e=>upd(o.id,'status',e.target.value)}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></td>
+                  <td><input type="number" className="fi" style={{width:72,padding:'2px 5px',fontSize:10}} value={o.profit||0} onChange={e=>upd(o.id,'profit',parseInt(e.target.value)||0)}/></td>
+                  <td><button className="btn btn-r btn-xs" onClick={()=>del(o.id)}>削除</button></td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <div style={{marginTop:8,textAlign:'right',fontSize:11,color:'#666'}}>
+        {rows.length}件 ／ 利益: <span style={{color:'#4ade80',fontWeight:700}}>¥{rows.reduce((s,o)=>s+(o.profit||0),0).toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Tab Settings ──────────────────────────────────────────
+function TabSettings({proxies,setProxies,accs,setAccs,addrs,setAddrs,cards,setCards}){
+  const [sec,setSec]=useState('proxy');
+  const updP=(id,k,v)=>setProxies(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
+  const updA=(id,k,v)=>setAccs(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
+  const updD=(id,k,v)=>setAddrs(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
+  const updC=(id,k,v)=>setCards(p=>p.map(x=>x.id===id?{...x,[k]:v}:x));
+
+  // Yahoo エイリアス生成
+  const genAlias=(email)=>{
+    if(!email)return;
+    const [u,d]=email.split('@');
+    if(!d)return;
+    const n=Math.floor(Math.random()*900)+100;
+    return `${u}+${n}@${d}`;
+  };
+
+  // ── バックアップ（全データJSON書き出し） ──
+  // ── localStorage全体をスナップショット化 ──
+  const snapshotLocalStorage=()=>{
+    const store={};
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      // このツールのキー(v3_)とGeminiキーのみ対象。無関係な他アプリのキーは除外
+      if(k && (k.startsWith('v3_')||k.startsWith('iphone_')||k==='gemini_api_key'||k==='pickup_queue')){
+        store[k]=localStorage.getItem(k);
+      }
+    }
+    return { _app:'iphone-pickup-v3', _kind:'full-localstorage', _at:new Date().toISOString(), store };
+  };
+  const fileName=()=>{ const d=new Date(); return `pickup-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}.json`; };
+
+  // ダウンロード方式（全ブラウザ対応）
+  const doBackup=()=>{
+    const dump=snapshotLocalStorage();
+    const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fileName();
+    a.click(); URL.revokeObjectURL(url);
+    setBkMsg(`✅ ${Object.keys(dump.store).length}項目を書き出しました`);
+  };
+
+  // File System Access API方式（Chrome/Edge：実ファイルに直接保存・上書き可）
+  const [fileHandle,setFileHandle]=useState(null);
+  const [bkMsg,setBkMsg]=useState('');
+  const hasFSA = typeof window!=='undefined' && 'showSaveFilePicker' in window;
+  const doBackupToFile=async()=>{
+    try{
+      let handle=fileHandle;
+      if(!handle){
+        handle=await window.showSaveFilePicker({ suggestedName:fileName(), types:[{description:'JSON',accept:{'application/json':['.json']}}] });
+        setFileHandle(handle);
+      }
+      const w=await handle.createWritable();
+      await w.write(JSON.stringify(snapshotLocalStorage(),null,2));
+      await w.close();
+      setBkMsg(`✅ ファイルに保存しました（次回から同ファイルに上書き）`);
+    }catch(err){ if(err.name!=='AbortError') setBkMsg('保存エラー: '+err.message); }
+  };
+
+  // ── 復元（localStorage全体を書き戻し） ──
+  const fileRef=React.useRef(null);
+  const doRestore=(e)=>{
+    const f=e.target.files?.[0]; if(!f)return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const d=JSON.parse(rd.result);
+        // 新形式（full-localstorage）
+        if(d.store && typeof d.store==='object'){
+          if(!confirm(`localStorage全体を復元します（${Object.keys(d.store).length}項目）。現在のデータは上書きされます。続行？`))return;
+          Object.entries(d.store).forEach(([k,v])=>localStorage.setItem(k,v));
+          alert('✅ 完全復元しました。ページを再読み込みします。');
+          location.reload();
+          return;
+        }
+        // 旧形式（個別キー）との後方互換
+        if(d._app!=='iphone-pickup-v3'){ if(!confirm('このツールのバックアップではない可能性があります。続行しますか？'))return; }
+        if(d.proxies)setProxies(d.proxies);
+        if(d.accs)setAccs(d.accs);
+        if(d.addrs)setAddrs(d.addrs);
+        if(d.cards)setCards(d.cards);
+        if(d.orders)localStorage.setItem('v3_orders',JSON.stringify(d.orders));
+        alert('✅ 復元しました。ページを再読み込みします。');
+        location.reload();
+      }catch(err){ alert('復元エラー: '+err.message); }
+    };
+    rd.readAsText(f);
+  };
+
+  return(
+    <div>
+      {/* バックアップ／復元 */}
+      <div className="card" style={{marginBottom:12,border:'1px solid var(--border2)'}}>
+        <div className="card-title">💾 バックアップ / 復元（localStorage全体）</div>
+        <div style={{fontSize:11,color:'var(--muted)',marginBottom:8}}>
+          全リソース・注文履歴・相場・Geminiキーを含む<strong style={{color:'var(--purple3)'}}>localStorage全体</strong>を保存します。ブラウザのデータ削除に備えて定期的に保存してください。
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+          {hasFSA && <button className="btn btn-g btn-sm" onClick={doBackupToFile}>💾 ファイルに保存{fileHandle?'（上書き）':''}</button>}
+          <button className="btn btn-gh btn-sm" onClick={doBackup}>⬇ ダウンロード保存</button>
+          <button className="btn btn-gh btn-sm" onClick={()=>fileRef.current?.click()}>⬆ 復元する</button>
+          <input ref={fileRef} type="file" accept="application/json,.json" style={{display:'none'}} onChange={doRestore}/>
+          {bkMsg && <span style={{fontSize:10,color:'var(--green2)'}}>{bkMsg}</span>}
+        </div>
+        {hasFSA && <div style={{fontSize:9,color:'var(--muted2)',marginTop:6}}>💾 ファイル保存は選んだ実ファイルに直接書き込み、2回目以降は同じファイルに上書きします（Chrome/Edge）。</div>}
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
+        {['proxy','accs','addrs','cards'].map(s=>(<button key={s} className={`btn btn-sm ${sec===s?'btn-p':'btn-gh'}`} onClick={()=>setSec(s)}>{{proxy:'プロキシ',accs:'アカウント',addrs:'住所',cards:'カード'}[s]}</button>))}
+      </div>
+
+      {sec==='proxy'&&(
+        <div>
+          <div className="al al-b" style={{marginBottom:10}}>SwitchyOmegaで切り替えるプロキシ情報を登録してください。<a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',marginLeft:4}}>SwitchyOmega設定 ↗</a></div>
+          {proxies.map(p=>(
+            <div key={p.id} className="card" style={{marginBottom:8}}>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+                <div style={{flex:'0 0 90px'}}><label className="fl">名前</label><input className="fi" value={p.n} onChange={e=>updP(p.id,'n',e.target.value)}/></div>
+                <div style={{flex:'0 0 80px'}}><label className="fl">種別</label><select className="fsel" value={p.t} onChange={e=>updP(p.id,'t',e.target.value)}><option>SOCKS5</option><option>HTTP</option><option>SIM</option></select></div>
+                {p.t!=='SIM'&&<>
+                  <div style={{flex:1,minWidth:140}}><label className="fl">ホスト名</label><input className="fi" value={p.host} onChange={e=>updP(p.id,'host',e.target.value)} placeholder="jp1.vpn.com"/></div>
+                  <div style={{flex:'0 0 65px'}}><label className="fl">ポート</label><input className="fi" value={p.port} onChange={e=>updP(p.id,'port',e.target.value)} placeholder="1080"/></div>
+                  <div style={{flex:'0 0 100px'}}><label className="fl">ユーザー名</label><input className="fi" value={p.user} onChange={e=>updP(p.id,'user',e.target.value)}/></div>
+                  <div style={{flex:'0 0 100px'}}><label className="fl">パスワード</label><input type="password" className="fi" value={p.pass} onChange={e=>updP(p.id,'pass',e.target.value)}/></div>
+                </>}
+                {p.t==='SIM'&&<div className="al al-b" style={{flex:1,marginBottom:0}}>機内モードON→OFFでIPを変える</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sec==='accs'&&(
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:10}}>
+            <button className="btn btn-p btn-sm" onClick={()=>setAccs(p=>[...p,{id:Date.now(),n:`アカウント${p.length+1}`,t:'Apple ID',email:'',tel:'',months:0,st:'ok'}])}>＋ 追加</button>
+          </div>
+          <div className="al al-y" style={{marginBottom:10}}>⚠ 電話番号・メールアドレスを登録すると重複チェックが機能します</div>
+          {accs.map(a=>(
+            <div key={a.id} className="card" style={{marginBottom:8}}>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+                <div style={{flex:'0 0 90px'}}><label className="fl">名前</label><input className="fi" value={a.n} onChange={e=>updA(a.id,'n',e.target.value)}/></div>
+                <div style={{flex:'0 0 80px'}}><label className="fl">種別</label><select className="fsel" value={a.t} onChange={e=>updA(a.id,'t',e.target.value)}><option>Apple ID</option><option>ゲスト</option></select></div>
+                <div style={{flex:1,minWidth:150}}>
+                  <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
+                    <label className="fl" style={{marginBottom:0}}>メール</label>
+                    {a.email&&<button className="btn btn-sm btn-xs btn-gh" style={{padding:'1px 5px',fontSize:9}} onClick={()=>{const al=genAlias(a.email);if(al)navigator.clipboard?.writeText(al).catch(()=>{});alert(`エイリアス生成:\n${al}\n(クリップボードにコピーしました)`);}} title="Yahooエイリアスを生成">🔀 エイリアス生成</button>}
+                  </div>
+                  <input className="fi" value={a.email} onChange={e=>updA(a.id,'email',e.target.value)} placeholder="xxx@yahoo.co.jp"/>
+                </div>
+                <div style={{flex:'0 0 130px'}}><label className="fl">電話番号（格安SIM）</label><input className="fi" value={a.tel||''} onChange={e=>updA(a.id,'tel',e.target.value)} placeholder="090-XXXX-XXXX"/></div>
+                <div style={{flex:'0 0 65px'}}><label className="fl">使用歴(月)</label><input type="number" className="fi" value={a.months} onChange={e=>updA(a.id,'months',parseInt(e.target.value)||0)}/></div>
+                <div style={{flex:'0 0 70px'}}><label className="fl">状態</label><select className="fsel" value={a.st} onChange={e=>updA(a.id,'st',e.target.value)}><option value="ok">使用可</option><option value="ban">BAN</option><option value="rest">休止</option></select></div>
+                <button className="btn btn-r btn-xs" onClick={()=>setAccs(p=>p.filter(x=>x.id!==a.id))}>削除</button>
+              </div>
+              <div style={{marginTop:5}}>
+                {a.months>=6?<span className="bdg bdg-g">✓ 6ヶ月以上</span>:<span className="bdg bdg-w">⚠ あと{6-a.months}ヶ月</span>}
+                {a.st==='ban'&&<span className="bdg bdg-r" style={{marginLeft:4}}>BAN済</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sec==='addrs'&&(
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:10}}>
+            <button className="btn btn-p btn-sm" onClick={()=>setAddrs(p=>[...p,{id:Date.now(),n:`住所${p.length+1}`,name:'',zip:'',addr:'',used:false}])}>＋ 追加</button>
+            <button className="btn btn-gh btn-sm" onClick={()=>setAddrs(p=>p.map(a=>({...a,used:false})))}>使用済リセット</button>
+            <span style={{marginLeft:'auto',fontSize:11,color:'#666'}}>残 {addrs.filter(a=>!a.used).length}/{addrs.length}</span>
+          </div>
+          <div className="al al-y" style={{marginBottom:10}}>⚠ 郵便番号・受取人名を登録すると重複チェックが機能します</div>
+          {addrs.map((a,i)=>(
+            <div key={a.id} className="card" style={{marginBottom:8,opacity:a.used?.6:1}}>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+                <div style={{flex:'0 0 70px'}}><label className="fl">ラベル</label><input className="fi" value={a.n} onChange={e=>updD(a.id,'n',e.target.value)}/></div>
+                <div style={{flex:'0 0 110px'}}><label className="fl">受取人名（変化させる）</label><input className="fi" value={a.name||''} onChange={e=>updD(a.id,'name',e.target.value)} placeholder="山田 太郎"/></div>
+                <div style={{flex:'0 0 95px'}}><label className="fl">郵便番号</label><input className="fi" value={a.zip} onChange={e=>updD(a.id,'zip',e.target.value)} placeholder="123-4567"/></div>
+                <div style={{flex:1,minWidth:160}}><label className="fl">住所</label><input className="fi" value={a.addr} onChange={e=>updD(a.id,'addr',e.target.value)} placeholder="東京都○○区△△1-2-3"/></div>
+                <button className={`btn btn-sm ${a.used?'btn-gh':'btn-g'}`} onClick={()=>updD(a.id,'used',!a.used)}>{a.used?'戻す':'使用済'}</button>
+                <button className="btn btn-r btn-xs" onClick={()=>setAddrs(p=>p.filter(x=>x.id!==a.id))}>削除</button>
+              </div>
+              {a.zip&&i>0&&addrs.slice(0,i).some(p=>p.zip===a.zip)&&(
+                <div className="al al-r" style={{marginTop:5}}>⚠ 郵便番号が重複しています</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sec==='cards'&&(
+        <div>
+          <div style={{display:'flex',gap:8,marginBottom:10}}>
+            <button className="btn btn-p btn-sm" onClick={()=>setCards(p=>[...p,{id:Date.now(),n:`カード${p.length+1}`,brand:'VISA',last4:'',type:'個人'}])}>＋ 追加</button>
+          </div>
+          <div className="al al-b" style={{marginBottom:10}}>ビジネスカードは規約上、転売仕入れに使用可能なケースがあります。個人カードは利用停止リスクあり。</div>
+          {cards.map(c=>(
+            <div key={c.id} className="card" style={{marginBottom:8}}>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+                <div style={{flex:'0 0 80px'}}><label className="fl">名前</label><input className="fi" value={c.n} onChange={e=>updC(c.id,'n',e.target.value)}/></div>
+                <div style={{flex:'0 0 80px'}}><label className="fl">ブランド</label><select className="fsel" value={c.brand} onChange={e=>updC(c.id,'brand',e.target.value)}><option>VISA</option><option>Master</option><option>AMEX</option><option>JCB</option></select></div>
+                <div style={{flex:'0 0 70px'}}><label className="fl">末4桁</label><input className="fi" value={c.last4} onChange={e=>updC(c.id,'last4',e.target.value)} placeholder="1234"/></div>
+                <div style={{flex:'0 0 90px'}}><label className="fl">種別</label><select className="fsel" value={c.type} onChange={e=>updC(c.id,'type',e.target.value)}><option>ビジネス</option><option>個人</option></select></div>
+                <button className="btn btn-r btn-xs" onClick={()=>setCards(p=>p.filter(x=>x.id!==c.id))}>削除</button>
+              </div>
+              {c.type==='個人'&&<div className="al al-y" style={{marginTop:5,fontSize:10}}>⚠ 個人カードの転売使用は規約違反のリスクあり。ビジネスカードへの切替を推奨。</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────
+function App(){
+  const [tab,setTab]=useState('pickup');
+  const [orders, setO] =useState(()=>ls('v3_orders',[]));
+  const [proxies,setP] =useState(()=>ls('v3_proxies',INIT_PROXIES));
+  const [accs,   setA] =useState(()=>ls('v3_accs',  INIT_ACCS));
+  const [addrs,  setAd]=useState(()=>ls('v3_addrs', INIT_ADDRS));
+  const [cards,  setC] =useState(()=>ls('v3_cards', INIT_CARDS));
+  const [shippingWarning, setShippingWarning] = useState('');
+  const [market, setMarket] = useState(()=>ls('v3_market', MARKET_FALLBACK));
+  const [marketAt, setMarketAt] = useState(()=>ls('v3_market_at', 'フォールバック値（2026/06/02）'));
+  const [marketBusy, setMarketBusy] = useState(false);
+  const ip=useIP();
+
+  // ── 相場取得（is-checker.com をパースして色別・容量別の差益を取得） ──
+  const loadMarket = React.useCallback(async ()=>{
+    setMarketBusy(true);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch('https://is-checker.com/iphone17_beta.html?229', { signal: controller.signal });
+      clearTimeout(timeout);
+      const html = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      // ヘッダ行から業者名を取得
+      const headerCells = Array.from(doc.querySelectorAll('table tr')).slice(0,2)
+        .flatMap(r=>Array.from(r.querySelectorAll('th,td')).map(c=>c.innerText.trim()));
+      const rows = Array.from(doc.querySelectorAll('table tr')).slice(2);
+      const next = {};
+      rows.forEach(r => {
+        const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim());
+        if (cells.length >= 5 && (cells[0]==='Max'||cells[0]==='Pro'||cells[0]==='無印')) {
+          const type=cells[0], cap=cells[1], color=cells[2];
+          const teika = parseInt((cells[3]||'').replace(/[^0-9]/g,''))||0;
+          const margin = parseInt((cells[4]||'').replace(/[^0-9-]/g,''))||0;
+          // 業者別買取価格から最高値と業者名を推定
+          const prices = cells.slice(5).map(v=>parseInt(v.replace(/[^0-9]/g,''))).filter(n=>n>10000);
+          const best = prices.length? Math.max(...prices):0;
+          const key = `${type}|${cap}|${color}`;
+          next[key] = { type, cap, color, teika, margin, best };
+          // MODELSタグ更新（色を問わず容量代表値）
+          const model = MODELS.find(m => m.n.includes(type) && m.c.includes(cap));
+          if (model && (model._m===undefined || margin>model._m)) {
+            model.ok = margin > 0; model._m = margin;
+            model.tag = margin > 0 ? `+${margin.toLocaleString()}円` : `${margin.toLocaleString()}円`;
+          }
+        }
+      });
+      if (Object.keys(next).length) {
+        setMarket(next); lss('v3_market', next);
+        const stamp = new Date().toLocaleString('ja-JP');
+        setMarketAt(stamp); lss('v3_market_at', stamp);
+      }
+    } catch(e) {
+      console.log('相場取得スキップ（オフライン/CORS）');
+    }
+    setMarketBusy(false);
+  },[]);
+
+  useEffect(()=>{ loadMarket(); },[loadMarket]);
+
+  const mk=(setter,key)=>v=>{const n=typeof v==='function'?v(undefined):v;lss(key,n);setter(n);};
+  const setOrders =v=>{const n=typeof v==='function'?v(orders):v; lss('v3_orders',n); setO(n);};
+  const setProxies=v=>{const n=typeof v==='function'?v(proxies):v;lss('v3_proxies',n);setP(n);};
+  const setAccs   =v=>{const n=typeof v==='function'?v(accs):v;   lss('v3_accs',n);   setA(n);};
+  const setAddrs  =v=>{const n=typeof v==='function'?v(addrs):v;  lss('v3_addrs',n);  setAd(n);};
+  const setCards  =v=>{const n=typeof v==='function'?v(cards):v;  lss('v3_cards',n);  setC(n);};
+
+  const TABS=[{id:'pickup',l:'🚀 ピックアップ'},{id:'orders',l:'📋 注文管理'},{id:'settings',l:'⚙️ 設定'}];
+
+  return(
+    <div>
+      <div className="topbar">
+        <div style={{fontSize:18}}>📱</div>
+        <div><div className="app-title">iPhone ピックアップツール v3</div><div className="app-sub">Noe Dolphin / 投資部門 — 7層リスクチェック搭載</div></div>
+        <div style={{marginLeft:'auto',fontSize:10,color:'#444'}}>注文 {orders.length} ／ 住所残 {addrs.filter(a=>!a.used).length}</div>
+      </div>
+
+      {/* IP bar */}
+      <div className="ipbar">
+        <span style={{color:'#444'}}>IP:</span>
+        <div className={`ip-chip ${ip.changed?'ok':ip.same?'bad':''}`} onClick={ip.check}>
+          <div className={`dot`} style={{background:ip.changed?'#4ade80':ip.same?'#f87171':'#555'}}/>
+          <span style={{fontFamily:'monospace',fontWeight:700,fontSize:11,color:ip.changed?'#4ade80':ip.same?'#f87171':'#888'}}>
+            {ip.busy?'確認中...':(ip.ip||'未確認')}
+          </span>
+          <span style={{fontSize:9,color:'#444',marginLeft:2}}>クリックで再確認</span>
+        </div>
+        {ip.same&&<span style={{color:'#f87171',fontWeight:700,fontSize:11}}>⚠ IPが変わっていません！</span>}
+        {ip.changed&&<span style={{color:'#4ade80',fontSize:11}}>✓ {ip.prev}→{ip.ip}</span>}
+        <a href="https://whatismyip.com" target="_blank" style={{marginLeft:'auto',color:'#444',textDecoration:'none',fontSize:10}}>whatismyip.com ↗</a>
+      </div>
+
+      {/* 島流し警告バナー */}
+      {shippingWarning && (
+        <div style={{background:'#1a0808',borderBottom:'1px solid #ef4444',padding:'8px 18px',fontSize:11,color:'#f87171',fontWeight:700}}>
+          {shippingWarning}
+        </div>
+      )}
+
+      <div className="tabs">
+        {TABS.map(t=><div key={t.id} className={`tab${tab===t.id?' active':''}`} onClick={()=>setTab(t.id)}>{t.l}</div>)}
+      </div>
+
+      <div className="main">
+        {tab==='pickup'   &&<TabPickup orders={orders} setOrders={setOrders} proxies={proxies} accs={accs} addrs={addrs} cards={cards} setAddrs={setAddrs} ip={ip} market={market} marketAt={marketAt} marketBusy={marketBusy} loadMarket={loadMarket}/>}
+        {tab==='orders'   &&<TabOrders orders={orders} setOrders={setOrders}/>}
+        {tab==='settings' &&<TabSettings proxies={proxies} setProxies={setProxies} accs={accs} setAccs={setAccs} addrs={addrs} setAddrs={setAddrs} cards={cards} setCards={setCards}/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
