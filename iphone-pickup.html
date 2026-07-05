@@ -224,30 +224,46 @@ const { useState, useEffect, useCallback, useMemo } = React;
 // ── constants ─────────────────────────────────────────────
 // tag/ok は起動時に is-checker から自動更新。取得失敗時は下記フォールバック（前回確認値）を表示。
 const MODELS = [
-  {id:'pm512',n:'Pro Max',c:'512GB',col:'#a78bfa',ok:true, tag:'+1,200円*', size:'6.9インチディスプレイ', cap:'512gb'},
-  {id:'pm256',n:'Pro Max',c:'256GB',col:'#60a5fa',ok:false,tag:'-300円*',  size:'6.9インチディスプレイ', cap:'256gb'},
-  {id:'pm1tb',n:'Pro Max',c:'1TB',  col:'#34d399',ok:false,tag:'-300円*',  size:'6.9インチディスプレイ', cap:'1tb'},
-  {id:'p512', n:'Pro',    c:'512GB',col:'#fbbf24',ok:true, tag:'+1,200円*',size:'6.3インチディスプレイ', cap:'512gb'},
-  {id:'p1tb', n:'Pro',    c:'1TB',  col:'#f87171',ok:false,tag:'-800円*',  size:'6.3インチディスプレイ', cap:'1tb'},
-  {id:'pm2tb',n:'Pro Max',c:'2TB',  col:'#f87171',ok:false,tag:'-31,300円*',size:'6.9インチディスプレイ', cap:'2tb'},
+  {id:'pm512',n:'Pro Max',c:'512GB',col:'#a78bfa',ok:false,tag:'-1,300円*', size:'6.9インチディスプレイ', cap:'512gb'},
+  {id:'pm256',n:'Pro Max',c:'256GB',col:'#60a5fa',ok:false,tag:'-1,800円*', size:'6.9インチディスプレイ', cap:'256gb'},
+  {id:'pm1tb',n:'Pro Max',c:'1TB',  col:'#34d399',ok:false,tag:'-1,300円*', size:'6.9インチディスプレイ', cap:'1tb'},
+  {id:'p512', n:'Pro',    c:'512GB',col:'#fbbf24',ok:false,tag:'-800円*',   size:'6.3インチディスプレイ', cap:'512gb'},
+  {id:'p1tb', n:'Pro',    c:'1TB',  col:'#f87171',ok:false,tag:'-1,800円*', size:'6.3インチディスプレイ', cap:'1tb'},
+  {id:'pm2tb',n:'Pro Max',c:'2TB',  col:'#f87171',ok:false,tag:'-30,800円*',size:'6.9インチディスプレイ', cap:'2tb'},
 ];
-// フォールバック相場（is-checker 2026/06/02値・CORSでライブ取得不可時に使用）
+// フォールバック相場（is-checker 2026/07/05値・CORSでライブ取得不可時に使用）
 const MARKET_FALLBACK = {
-  'Max|256|シルバー':{type:'Max',cap:'256',color:'シルバー',teika:194800,margin:-300,best:194500},
-  'Max|256|オレンジ':{type:'Max',cap:'256',color:'オレンジ',teika:194800,margin:-300,best:194500},
-  'Max|256|ディープブルー':{type:'Max',cap:'256',color:'ディープブルー',teika:194800,margin:-300,best:194500},
-  'Max|512|シルバー':{type:'Max',cap:'512',color:'シルバー',teika:229800,margin:1200,best:231000},
-  'Max|512|オレンジ':{type:'Max',cap:'512',color:'オレンジ',teika:229800,margin:-2800,best:227000},
-  'Max|512|ディープブルー':{type:'Max',cap:'512',color:'ディープブルー',teika:229800,margin:200,best:230000},
-  'Max|1TB|シルバー':{type:'Max',cap:'1TB',color:'シルバー',teika:264800,margin:-300,best:264500},
-  'Max|1TB|オレンジ':{type:'Max',cap:'1TB',color:'オレンジ',teika:264800,margin:-8300,best:256500},
-  'Max|1TB|ディープブルー':{type:'Max',cap:'1TB',color:'ディープブルー',teika:264800,margin:-300,best:264500},
-  'Max|2TB|シルバー':{type:'Max',cap:'2TB',color:'シルバー',teika:329800,margin:-31300,best:298500},
-  'Pro|256|シルバー':{type:'Pro',cap:'256',color:'シルバー',teika:179800,margin:-300,best:179500},
-  'Pro|512|シルバー':{type:'Pro',cap:'512',color:'シルバー',teika:214800,margin:1200,best:216000},
-  'Pro|512|オレンジ':{type:'Pro',cap:'512',color:'オレンジ',teika:214800,margin:700,best:215500},
-  'Pro|512|ディープブルー':{type:'Pro',cap:'512',color:'ディープブルー',teika:214800,margin:700,best:215500},
-  'Pro|1TB|シルバー':{type:'Pro',cap:'1TB',color:'シルバー',teika:249800,margin:-800,best:249000},
+  'Max|256|シルバー':{type:'Max',cap:'256',color:'シルバー',teika:194800,margin:-1800,best:193000},
+  'Max|256|オレンジ':{type:'Max',cap:'256',color:'オレンジ',teika:194800,margin:-4800,best:190000},
+  'Max|256|ディープブルー':{type:'Max',cap:'256',color:'ディープブルー',teika:194800,margin:-4800,best:190000},
+  'Max|512|シルバー':{type:'Max',cap:'512',color:'シルバー',teika:229800,margin:-1300,best:228500},
+  'Max|512|オレンジ':{type:'Max',cap:'512',color:'オレンジ',teika:229800,margin:-1800,best:228000},
+  'Max|512|ディープブルー':{type:'Max',cap:'512',color:'ディープブルー',teika:229800,margin:-1300,best:228500},
+  'Max|1TB|シルバー':{type:'Max',cap:'1TB',color:'シルバー',teika:264800,margin:-1800,best:263000},
+  'Max|1TB|オレンジ':{type:'Max',cap:'1TB',color:'オレンジ',teika:264800,margin:-4800,best:260000},
+  'Max|1TB|ディープブルー':{type:'Max',cap:'1TB',color:'ディープブルー',teika:264800,margin:-1300,best:263500},
+  'Max|2TB|シルバー':{type:'Max',cap:'2TB',color:'シルバー',teika:329800,margin:-30800,best:299000},
+  'Max|2TB|オレンジ':{type:'Max',cap:'2TB',color:'オレンジ',teika:329800,margin:-30800,best:299000},
+  'Max|2TB|ディープブルー':{type:'Max',cap:'2TB',color:'ディープブルー',teika:329800,margin:-30800,best:299000},
+  'Pro|256|シルバー':{type:'Pro',cap:'256',color:'シルバー',teika:179800,margin:-2800,best:177000},
+  'Pro|256|オレンジ':{type:'Pro',cap:'256',color:'オレンジ',teika:179800,margin:-3800,best:176000},
+  'Pro|256|ディープブルー':{type:'Pro',cap:'256',color:'ディープブルー',teika:179800,margin:-3300,best:176500},
+  'Pro|512|シルバー':{type:'Pro',cap:'512',color:'シルバー',teika:214800,margin:-800,best:214000},
+  'Pro|512|オレンジ':{type:'Pro',cap:'512',color:'オレンジ',teika:214800,margin:-1300,best:213500},
+  'Pro|512|ディープブルー':{type:'Pro',cap:'512',color:'ディープブルー',teika:214800,margin:-800,best:214000},
+  'Pro|1TB|シルバー':{type:'Pro',cap:'1TB',color:'シルバー',teika:249800,margin:-1800,best:248000},
+  'Pro|1TB|オレンジ':{type:'Pro',cap:'1TB',color:'オレンジ',teika:249800,margin:-1800,best:248000},
+  'Pro|1TB|ディープブルー':{type:'Pro',cap:'1TB',color:'ディープブルー',teika:249800,margin:-1800,best:248000},
+  '無印|256|ラベンダー':{type:'無印',cap:'256',color:'ラベンダー',teika:129800,margin:700,best:130500},
+  '無印|256|セージ':{type:'無印',cap:'256',color:'セージ',teika:129800,margin:700,best:130500},
+  '無印|256|ミストブルー':{type:'無印',cap:'256',color:'ミストブルー',teika:129800,margin:700,best:130500},
+  '無印|256|ホワイト':{type:'無印',cap:'256',color:'ホワイト',teika:129800,margin:700,best:130500},
+  '無印|256|ブラック':{type:'無印',cap:'256',color:'ブラック',teika:129800,margin:700,best:130500},
+  '無印|512|ラベンダー':{type:'無印',cap:'512',color:'ラベンダー',teika:164800,margin:-13800,best:151000},
+  '無印|512|セージ':{type:'無印',cap:'512',color:'セージ',teika:164800,margin:-13800,best:151000},
+  '無印|512|ミストブルー':{type:'無印',cap:'512',color:'ミストブルー',teika:164800,margin:-13800,best:151000},
+  '無印|512|ホワイト':{type:'無印',cap:'512',color:'ホワイト',teika:164800,margin:-13800,best:151000},
+  '無印|512|ブラック':{type:'無印',cap:'512',color:'ブラック',teika:164800,margin:-13800,best:151000},
 };
 
 // iPhone 17 Pro 実際のカラー（Apple Store確認済み）
@@ -501,7 +517,7 @@ function VpnModal({proxy,onDone}){
           </div>
         ))}
         <div className="div"/>
-        {!isSIM&&<div style={{marginBottom:10}}><a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',fontSize:11}}>→ SwitchyOmega設定を開く ↗</a></div>}
+        {!isSIM&&<div style={{marginBottom:10}}><a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',fontSize:11}}>→ SwitchyOmega設定を開く ↗</a><span style={{fontSize:9,color:'#555',marginLeft:6}}>※SwitchyOmega導入済みのChromeのみ</span></div>}
         <button className="btn btn-g btn-full" onClick={onDone}>✓ 切替完了 — IPを確認する</button>
       </div>
     </div>
@@ -1054,7 +1070,7 @@ function TabPickup({orders,setOrders,proxies,accs,addrs,cards,setAddrs,ip,market
 
       {/* Risk panel */}
       <div style={{marginTop:10}}>
-        <div className="card-title" style={{fontSize:11,marginBottom:8}}>🎯 島流しリスク詳細分析（7層）</div>
+        <div className="card-title" style={{fontSize:11,marginBottom:8}}>🎯 島流しリスク詳細分析（8項目チェック）</div>
         <RiskPanel risk={risk}/>
       </div>
 
@@ -1226,7 +1242,7 @@ function TabSettings({proxies,setProxies,accs,setAccs,addrs,setAddrs,cards,setCa
 
       {sec==='proxy'&&(
         <div>
-          <div className="al al-b" style={{marginBottom:10}}>SwitchyOmegaで切り替えるプロキシ情報を登録してください。<a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',marginLeft:4}}>SwitchyOmega設定 ↗</a></div>
+          <div className="al al-b" style={{marginBottom:10}}>SwitchyOmegaで切り替えるプロキシ情報を登録してください。<a href="chrome-extension://padekgcemlokbadohgkifijomclgjgif/options.html" target="_blank" style={{color:'#a78bfa',marginLeft:4}}>SwitchyOmega設定 ↗</a><span style={{fontSize:9,color:'#555',marginLeft:4}}>※拡張導入済みのChromeのみ開けます</span></div>
           {proxies.map(p=>(
             <div key={p.id} className="card" style={{marginBottom:8}}>
               <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
@@ -1337,7 +1353,7 @@ function App(){
   const [cards,  setC] =useState(()=>ls('v3_cards', INIT_CARDS));
   const [shippingWarning, setShippingWarning] = useState('');
   const [market, setMarket] = useState(()=>ls('v3_market', MARKET_FALLBACK));
-  const [marketAt, setMarketAt] = useState(()=>ls('v3_market_at', 'フォールバック値（2026/06/02）'));
+  const [marketAt, setMarketAt] = useState(()=>ls('v3_market_at', 'フォールバック値（2026/07/05）'));
   const [marketBusy, setMarketBusy] = useState(false);
   const ip=useIP();
 
@@ -1361,10 +1377,12 @@ function App(){
         const cells = Array.from(r.querySelectorAll('td')).map(c => c.innerText.trim());
         if (cells.length >= 5 && (cells[0]==='Max'||cells[0]==='Pro'||cells[0]==='無印')) {
           const type=cells[0], cap=cells[1], color=cells[2];
-          const teika = parseInt((cells[3]||'').replace(/[^0-9]/g,''))||0;
-          const margin = parseInt((cells[4]||'').replace(/[^0-9-]/g,''))||0;
+          // セル内の変動注記「(500↓)」等が数値に結合されないよう、先頭の数値のみ抽出する
+          const firstNum = v => { const m = (v||'').match(/-?[0-9][0-9,]*/); return m ? parseInt(m[0].replace(/,/g,''),10) : 0; };
+          const teika = firstNum(cells[3]);
+          const margin = firstNum(cells[4]);
           // 業者別買取価格から最高値と業者名を推定
-          const prices = cells.slice(5).map(v=>parseInt(v.replace(/[^0-9]/g,''))).filter(n=>n>10000);
+          const prices = cells.slice(5).map(firstNum).filter(n=>n>10000&&n<1000000);
           const best = prices.length? Math.max(...prices):0;
           const key = `${type}|${cap}|${color}`;
           next[key] = { type, cap, color, teika, margin, best };
@@ -1403,7 +1421,8 @@ function App(){
       <div className="topbar">
         <div style={{fontSize:18}}>📱</div>
         <div><div className="app-title">iPhone ピックアップツール v3</div><div className="app-sub">Noe Dolphin / 投資部門 — 7層リスクチェック搭載</div></div>
-        <div style={{marginLeft:'auto',fontSize:10,color:'#444'}}>注文 {orders.length} ／ 住所残 {addrs.filter(a=>!a.used).length}</div>
+        <a href="./index.html" title="ランチャーへ戻る" style={{marginLeft:'auto',fontSize:10,color:'#a78bfa',textDecoration:'none'}}>🏠 ランチャー</a>
+        <div style={{fontSize:10,color:'#444',marginLeft:10}}>注文 {orders.length} ／ 住所残 {addrs.filter(a=>!a.used).length}</div>
       </div>
 
       {/* IP bar */}
