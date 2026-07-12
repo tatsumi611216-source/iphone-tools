@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <style>html,body,#root{margin:0;padding:0;background:#0d0d1a;min-height:100vh;color:#e0e0e0;}*{font-family:'Noto Sans JP','Hiragino Sans',sans-serif;}</style>
 <script>window.addEventListener('error',function(e){var r=document.getElementById('root');if(r)r.innerHTML='<div style="color:#ff4444;padding:20px;font-size:12px;white-space:pre-wrap;font-family:monospace;">❌ '+(e.message||'')+'\n'+(e.filename||'')+':'+(e.lineno||'')+'</div>';});</script>
+<script src="./gen-config.js"></script>
 <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
@@ -20,11 +21,8 @@ const { useState, useEffect } = React;
 const KAITORI_COMPANIES = ["ゲオ","イオシス","ムスビー","じゃんぱら","ソフマップ"];
 const CARD_TYPES = ["通常カード","Apple Card","Apple Pay","デビット","ギフトカード","銀行振込","その他"];
 const CARD_BRANDS = ["VISA","Mastercard","JCB","AMEX","Diners","その他"];
-const MODELS = [
-  "iPhone 17 Pro Max 256GB","iPhone 17 Pro Max 512GB","iPhone 17 Pro Max 1TB",
-  "iPhone 17 Pro 256GB","iPhone 17 Pro 512GB",
-  "iPhone 16 Pro Max 256GB","iPhone 16 Pro Max 512GB","iPhone 16 Pro 256GB","iPhone 16 256GB",
-];
+// 世代固有値は gen-config.js（window.GEN）から取得。iPhone 18 移行時は gen-config.js のみ差し替え。
+const MODELS = GEN.orderModelsFull;
 const FLOW_STEPS = [
   { id:"order",     label:"注文済",   icon:"🛒", color:"#4f8ef7" },
   { id:"invoiced",  label:"請求確定", icon:"💴", color:"#4ff7e8" },
@@ -860,11 +858,11 @@ function CautionPanel() {
 // INFO FEED
 // ============================================================
 function InfoFeed() {
-  const [query,setQuery] = useState("iPhone 17 ProMax 買取相場 2026");
+  const [query,setQuery] = useState(`${GEN.label} ProMax 買取相場 2026`);
   const [loading,setLoading] = useState(false);
   const [results,setResults] = useState([]);
   const [error,setError] = useState("");
-  const QUICK = ["iPhone 17 ProMax 買取相場","Apple Store 購入制限 2026","iPhone転売 確定申告","買取業者 比較 最新"];
+  const QUICK = [`${GEN.label} ProMax 買取相場`,"Apple Store 購入制限 2026","iPhone転売 確定申告","買取業者 比較 最新"];
   async function search() {
     setLoading(true); setError(""); setResults([]);
     try {
@@ -907,78 +905,14 @@ function InfoFeed() {
 // ============================================================
 // 買取相場 (is-checker.com スナップショット 2026/04/09)
 // ============================================================
-const BUYBACK_SOURCE = "https://is-checker.com/iphone17_beta.html?229";
-const BUYBACK_UPDATED = "2026/04/09 13:37";
-const BUYBACK_STORES = ["モバイルミックス","海峡通信","買取一丁目","買取ホムラ","買取ルデヤ","買取楽園","買取WIKI","モバステ","森森買取","買取商店","空間","ソムリエ"];
-const BUYBACK_DATA = {
-  "iPhone 17 Pro Max": {
-    colors: ["シルバー","オレンジ","ディープブルー"],
-    rows: [
-      { cap:"256GB", apple:194800, byColor:{
-        "シルバー":     [217000,217000,217000,217000,218500,216500,216000,217000,218500,217000,217000,217500],
-        "オレンジ":     [217000,217000,217000,217000,218500,216500,216000,217000,218500,217000,217000,217500],
-        "ディープブルー":[217000,217000,217000,217000,218500,216500,216000,217000,218500,217000,217000,218500],
-      }},
-      { cap:"512GB", apple:229800, byColor:{
-        "シルバー":     [247000,247000,247000,247000,248000,247000,247000,247000,248000,247000,247000,248000],
-        "オレンジ":     [236000,237500,237500,237500,238000,237500,237500,237500,238000,237500,237500,238000],
-        "ディープブルー":[244000,244000,244000,244000,246000,244000,244000,245000,246000,244000,244000,246000],
-      }},
-      { cap:"1TB", apple:264800, byColor:{
-        "シルバー":     [273000,273000,273000,273000,274000,273000,273000,273000,274000,273000,273000,274500],
-        "オレンジ":     [263000,265000,265000,265000,266000,266000,265000,265000,266000,266000,266000,266000],
-        "ディープブルー":[267000,269000,269000,269000,270000,269500,269000,269000,270000,269500,269500,270500],
-      }},
-      { cap:"2TB", apple:329800, byColor:{
-        "シルバー":     [302000,302000,304000,304000,305000,302000,302000,302000,305000,304000,304000,305500],
-        "オレンジ":     [297000,302000,304000,304000,305000,302000,302000,302000,305000,304000,304000,305500],
-        "ディープブルー":[297000,302000,304000,304000,305000,302000,302000,302000,305000,304000,304000,305500],
-      }},
-    ],
-  },
-  "iPhone 17 Pro": {
-    colors: ["シルバー","オレンジ","ディープブルー"],
-    rows: [
-      { cap:"256GB", apple:179800, byColor:{
-        "シルバー":     [199000,199500,199500,199500,200500,199000,198500,199500,200500,199500,199500,200500],
-        "オレンジ":     [198000,199500,199500,199500,200500,199000,198500,199500,200500,199500,199500,200500],
-        "ディープブルー":[198000,199500,199500,199500,200500,199000,198500,199500,200500,199500,199500,200500],
-      }},
-      { cap:"512GB", apple:214800, byColor:{
-        "シルバー":     [224000,224000,224000,224000,225000,224000,224000,223000,225000,224000,224000,225000],
-        "オレンジ":     [221000,223000,223000,223000,224000,223000,223000,222000,222000,224000,224000,225500],
-        "ディープブルー":[222000,223000,223000,223000,224000,223000,223000,222000,222000,224000,224000,225000],
-      }},
-      { cap:"1TB", apple:249800, byColor:{
-        "シルバー":     [253000,253000,253000,253000,253000,252000,253000,253000,253000,253000,253000,254000],
-        "オレンジ":     [251000,253000,253000,253000,253000,252000,253000,253000,253000,253000,253000,254000],
-        "ディープブルー":[251000,253000,253000,253000,253000,252000,253000,253000,253000,253000,253000,254000],
-      }},
-    ],
-  },
-  "iPhone 17 Air": {
-    colors: ["ラベンダー","セージ","ミストブルー","ホワイト","ブラック"],
-    rows: [
-      { cap:"256GB", apple:129800, byColor:{
-        "ラベンダー":  [120000,121000,121000,121000,121200,120500,120000,120000,121000,121000,121000,122000],
-        "セージ":      [120000,121000,121000,121000,121200,120500,120000,120000,121000,121000,121000,122000],
-        "ミストブルー":[120000,121000,121000,121000,121200,120500,120000,120000,121000,121000,121000,122000],
-        "ホワイト":    [120000,121000,121000,121000,121200,120500,120000,120000,121000,121000,121000,122000],
-        "ブラック":    [120000,121000,121000,121000,121200,120500,120000,120000,121000,121000,121000,122000],
-      }},
-      { cap:"512GB", apple:164800, byColor:{
-        "ラベンダー":  [148000,148000,148000,148000,148000,147000,148000,143000,150000,149000,149200,150500],
-        "セージ":      [148000,148000,148000,148000,148000,147000,148000,143000,150000,149000,149200,150500],
-        "ミストブルー":[146000,148000,148000,148000,148000,147000,148000,143000,150000,149000,149200,150500],
-        "ホワイト":    [148000,148000,148000,148000,148000,147000,148000,143000,150000,149000,149200,150500],
-        "ブラック":    [148000,148000,148000,148000,148000,147000,148000,143000,150000,149000,149200,150500],
-      }},
-    ],
-  },
-};
+// 買取スナップショットは gen-config.js（GEN.buyback）に集約。キーは「<label> <suffix>」に自動展開。
+const BUYBACK_SOURCE = GEN.isCheckerUrl;
+const BUYBACK_UPDATED = GEN.buyback.updated;
+const BUYBACK_STORES = GEN.buyback.stores;
+const BUYBACK_DATA = GEN.buybackData;
 function yen(n){ return "¥"+n.toLocaleString(); }
 function BuybackPanel(){
-  const [sel,setSel] = useState("iPhone 17 Pro Max");
+  const [sel,setSel] = useState(GEN.buybackDefault);
   const [view,setView] = useState("matrix"); // matrix | ranking
   const d = BUYBACK_DATA[sel];
   const [color,setColor] = useState(d.colors[0]);
@@ -1294,7 +1228,7 @@ function App() {
       </div>
       <div style={{maxWidth:720,margin:"24px auto 0",padding:"0 16px"}}>
         {tab==="tracker"&&<><h2 style={ST}>📋 注文管理</h2><OrderTracker accounts={accounts} cards={cards}/></>}
-        {tab==="buyback"&&<><h2 style={ST}>💰 iPhone 17 買取相場</h2><BuybackPanel/></>}
+        {tab==="buyback"&&<><h2 style={ST}>💰 {GEN.label} 買取相場</h2><BuybackPanel/></>}
         {tab==="cards"&&(
           <>
             <h2 style={ST}>💳 カード管理</h2>

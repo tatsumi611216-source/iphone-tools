@@ -103,6 +103,7 @@ h1{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;}
 /* Gemini badge */
 .powered{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#555;background:#0e0e1c;border:1px solid #1a1a2e;border-radius:10px;padding:2px 8px;}
 </style>
+<script src="./gen-config.js"></script>
 </head>
 <body>
 <div class="center">
@@ -180,16 +181,16 @@ h1{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;}
 <div style="max-width:680px;width:100%;margin-bottom:16px;">
   <div style="font-size:10px;color:#444;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;">📊 相場確認サイト</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <a href="https://is-checker.com/iphone17_beta.html?229" target="_blank"
+    <a id="isCheckerLink" href="#" target="_blank"
       style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
       onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='#252545'">
       📋 is-checker（全業者一覧）
       <span style="font-size:9px;color:#555;">リアルタイム差益付き</span>
     </a>
-    <a href="https://x.com/search?q=%23iPhone17%E8%B2%B7%E5%8F%96%E7%9B%B8%E5%A0%B4&f=live" target="_blank"
+    <a id="xSearchLink" href="#" target="_blank"
       style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
       onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#252545'">
-      𝕏 #iPhone17買取相場
+      𝕏 <span id="xSearchText">#iPhone17買取相場</span>
     </a>
     <a href="https://whatismyip.com" target="_blank"
       style="display:flex;align-items:center;gap:6px;background:#0e0e1c;border:1px solid #252545;border-radius:8px;padding:8px 12px;text-decoration:none;color:#e0e0f0;font-size:12px;font-weight:700;transition:.2s;"
@@ -314,7 +315,18 @@ async function callGemini(prompt) {
 }
 
 // ── プロンプト定義 ──
-const IS_CHECKER_URL = 'https://is-checker.com/iphone17_beta.html?229';
+// 世代固有値は gen-config.js（window.GEN）から取得。iPhone 18 移行時は gen-config.js のみ差し替え。
+const IS_CHECKER_URL = GEN.isCheckerUrl;
+
+// ランチャー上の外部リンクを世代設定から反映
+(function wireLauncherLinks(){
+  const il = document.getElementById('isCheckerLink');
+  if (il) il.href = GEN.isCheckerUrl;
+  const xl = document.getElementById('xSearchLink');
+  if (xl) xl.href = `https://x.com/search?q=${encodeURIComponent('#' + GEN.hashtag)}&f=live`;
+  const xt = document.getElementById('xSearchText');
+  if (xt) xt.textContent = '#' + GEN.hashtag;
+})();
 
 const PROMPTS = {
   default: `
@@ -322,11 +334,11 @@ const PROMPTS = {
 
 【必ずアクセスするURL】
 ${IS_CHECKER_URL}
-このページにiPhone 17全モデルの全業者買取価格と差益（利益）がリアルタイムで載っています。
+このページに${GEN.label}全モデルの全業者買取価格と差益（利益）がリアルタイムで載っています。
 このページのデータを最優先で使用してください。
 
 【補足調査】
-- X（旧Twitter）で #iPhone17買取相場 の最新ツイートも確認する
+- X（旧Twitter）で #${GEN.hashtag} の最新ツイートも確認する
 - 島流し・即ごちゅありの最新状況を調べる
 
 【出力形式】
